@@ -118,19 +118,23 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     public void onRecordingBtnClick(View view) {
-        if (!toggleButton.isChecked()) {
+        if (!isRecordingInProgress) {
             startTime = Calendar.getInstance().getTime();
             Log.i(LOG_TAG, "Start Button Clicked");
             errorTextView.setText("");
             InitializeSpeechSettings();
-            toggleButton.setChecked(true);
+            //toggleButton.setChecked(true);
+            StartListeningSpeech();
             recordingButton.setText("Stop Recording");
+            isRecordingInProgress=true;
             stopListening=false;
         } else {
             Log.i(LOG_TAG, "Stop Button Clicked");
             stopListening = true;
-            toggleButton.setChecked(false);
+            //toggleButton.setChecked(false);
+            StopListeningSpeech();
             recordingButton.setText("Start Recording");
+            isRecordingInProgress=false;
         }
     }
 
@@ -185,7 +189,8 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     public void onEndOfSpeech() {
         Log.i(LOG_TAG, "onEndOfSpeech");
         progressBar.setIndeterminate(true);
-        toggleButton.setChecked(false);
+        //toggleButton.setChecked(false);
+        StopListeningSpeech();
     }
 
     @Override
@@ -197,8 +202,8 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
         if (!stopListening && errorCode == SpeechRecognizer.ERROR_NO_MATCH) {
             Log.i(LOG_TAG, Integer.toString(count));
-            toggleButton.setChecked(true);
-            //StartListeningSpeech();
+            //toggleButton.setChecked(true);
+            StartListeningSpeech();
             count++;
         }
         else{
@@ -219,8 +224,8 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
         if (!stopListening) {
             Log.i(LOG_TAG, Integer.toString(count));
-            toggleButton.setChecked(true);
-            //StartListeningSpeech();
+//            toggleButton.setChecked(true);
+            StartListeningSpeech();
             count++;
         }
     }

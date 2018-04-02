@@ -23,7 +23,7 @@ import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
+//import android.widget.ToggleButton;
 
 import org.w3c.dom.Text;
 
@@ -37,7 +37,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     private static final int REQUEST_RECORD_PERMISSION = 100;
     Button recordingButton;
     TextView returnedText, wordCountTextView, errorTextView;
-    ToggleButton toggleButton;
+//    ToggleButton toggleButton;
     ProgressBar progressBar;
     SpeechRecognizer speech = null;
     Intent recognizerIntent;
@@ -61,7 +61,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
         returnedText = (TextView) findViewById(R.id.resultsTextView);
         progressBar = (ProgressBar) findViewById(R.id.progressBar1);
-        toggleButton = (ToggleButton) findViewById(R.id.toggleButton1);
+//        toggleButton = (ToggleButton) findViewById(R.id.toggleButton1);
         wordCountTextView = (TextView) findViewById(R.id.wordCountTextView);
         errorTextView = (TextView) findViewById(R.id.errorTextView);
         recordingButton = (Button) findViewById(R.id.recordingButton);
@@ -71,22 +71,22 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         progressBar.setVisibility(View.INVISIBLE);
         InitializeSpeechSettings();
         //recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-        toggleButton.setBackgroundColor(Color.GREEN);
+//        toggleButton.setBackgroundColor(Color.GREEN);
 
-        toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView,
-                                         boolean isChecked) {
-                if (isChecked) {
-                    StartListeningSpeech();
-
-                } else {
-                    StopListeningSpeech();
-
-                }
-            }
-        });
+//        toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//
+//            @Override
+//            public void onCheckedChanged(CompoundButton buttonView,
+//                                         boolean isChecked) {
+//                if (isChecked) {
+//                    StartListeningSpeech();
+//
+//                } else {
+//                    StopListeningSpeech();
+//
+//                }
+//            }
+//        });
     }
 
     private void InitializeSpeechSettings() {
@@ -154,14 +154,13 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 //        stopListening = true;
         progressBar.setIndeterminate(false);
         progressBar.setVisibility(View.INVISIBLE);
-        toggleButton.setBackgroundColor(Color.GREEN);
+//        toggleButton.setBackgroundColor(Color.GREEN);
         speech.stopListening();
     }
 
 
     @Override
     public void onReadyForSpeech(Bundle params) {
-
         Log.i(LOG_TAG, "onReadyForSpeech");
     }
 
@@ -180,9 +179,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onBufferReceived(byte[] buffer) {
-
         Log.i(LOG_TAG, "onBufferReceived: " + buffer);
-
     }
 
     @Override

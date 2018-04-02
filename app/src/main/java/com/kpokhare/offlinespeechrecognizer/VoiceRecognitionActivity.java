@@ -1,9 +1,11 @@
 package com.kpokhare.offlinespeechrecognizer;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -229,6 +231,12 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                 Log.d(LOG_TAG, "Avg Word Count:" + Long.toString(avgWordCount));
                 WordCountIntervalIncrementor = WordCountIntervalIncrementor + WordCountInterval;
                 wordCountTextView.setText("Status:" + Long.toString(avgWordCount) + " words per " + Integer.toString(WordCountInterval) + " seconds.");
+                int minimumWordsBeforeVibration=Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
+                if(avgWordCount > minimumWordsBeforeVibration){
+                    Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                    v.vibrate(500);
+                }
+
             }
         }
     }

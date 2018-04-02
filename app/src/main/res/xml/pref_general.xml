@@ -56,4 +56,12 @@
         android:singleLine="true"
         android:title="Minimum Speech Interval" />
 
+    <EditTextPreference
+        android:defaultValue="@string/minimum_words_vibration"
+        android:inputType="number"
+        android:key="minimum_words_vibration"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="Minimum Number of Words before vibration" />
+
 </PreferenceScreen>

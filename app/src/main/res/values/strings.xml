@@ -2,6 +2,7 @@
     <string name="app_name">Speech Recognition</string>
     <string name="recording_start_displaytext">Start Recording</string>
     <string name="recording_stop_displaytext">Stop Recording</string>
+    <string name="minimum_words_vibration">10</string>
     <string name="title_activity_settings">Settings</string>
 
     <!-- Strings related to Settings -->

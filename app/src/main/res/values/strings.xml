@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">AMEX Speech Recognition</string>
+    <string name="app_name">Speech Recognition</string>
+    <string name="recording_start_displaytext">Start Recording</string>
+    <string name="recording_stop_displaytext">Stop Recording</string>
     <string name="title_activity_settings">Settings</string>
 
     <!-- Strings related to Settings -->

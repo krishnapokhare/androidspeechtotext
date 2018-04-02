@@ -77,17 +77,10 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             public void onCheckedChanged(CompoundButton buttonView,
                                          boolean isChecked) {
                 if (isChecked) {
-                    Log.i(LOG_TAG, "Checked");
                     StartListeningSpeech();
-                    toggleButton.setBackgroundColor(Color.RED);
-                    errorTextView.setText("");
+
                 } else {
-                    Log.i(LOG_TAG, "Unchecked");
-                    stopListening = true;
-                    progressBar.setIndeterminate(false);
-                    progressBar.setVisibility(View.INVISIBLE);
-                    toggleButton.setBackgroundColor(Color.GREEN);
-                    speech.stopListening();
+                    StopListeningSpeech();
 
                 }
             }
@@ -130,6 +123,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             InitializeSpeechSettings();
             toggleButton.setChecked(true);
             recordingButton.setText("Stop Recording");
+            stopListening=false;
         } else {
             Log.i(LOG_TAG, "Stop Button Clicked");
             stopListening = true;
@@ -139,12 +133,23 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     public void StartListeningSpeech() {
+        Log.i(LOG_TAG, "Checked");
         progressBar.setVisibility(View.VISIBLE);
         progressBar.setIndeterminate(true);
         ActivityCompat.requestPermissions
                 (VoiceRecognitionActivity.this,
                         new String[]{Manifest.permission.RECORD_AUDIO},
                         REQUEST_RECORD_PERMISSION);
+        errorTextView.setText("");
+    }
+
+    public void StopListeningSpeech(){
+        Log.i(LOG_TAG, "Unchecked");
+//        stopListening = true;
+        progressBar.setIndeterminate(false);
+        progressBar.setVisibility(View.INVISIBLE);
+        toggleButton.setBackgroundColor(Color.GREEN);
+        speech.stopListening();
     }
 
 
@@ -186,8 +191,14 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         String errorMessage = getErrorText(errorCode);
         Log.e(LOG_TAG, "FAILED " + errorMessage);
         errorTextView.setText(errorMessage);
-        toggleButton.setChecked(false);
+        //toggleButton.setChecked(false);
         recordingButton.setText("Start Recording");
+        if (!stopListening) {
+            Log.i(LOG_TAG, Integer.toString(count));
+            toggleButton.setChecked(true);
+            //StartListeningSpeech();
+            count++;
+        }
     }
 
     @Override
@@ -201,7 +212,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         finalResult = finalResult + matches.get(0)+ ". ";
         returnedText.setText(finalResult);
 
-        if (count < 5) {
+        if (!stopListening) {
             Log.i(LOG_TAG, Integer.toString(count));
             toggleButton.setChecked(true);
             //StartListeningSpeech();

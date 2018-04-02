@@ -35,22 +35,24 @@ import java.util.Date;
 public class VoiceRecognitionActivity extends AppCompatActivity implements RecognitionListener {
 
     private static final int REQUEST_RECORD_PERMISSION = 100;
-    private Button recordingButton;
-    private TextView returnedText, wordCountTextView, errorTextView;
-    private ToggleButton toggleButton;
-    private ProgressBar progressBar;
-    private SpeechRecognizer speech = null;
-    private Intent recognizerIntent;
-    private String LOG_TAG = "VoiceRecognitionActivity";
-    private boolean stopListening = false;
+    Button recordingButton;
+    TextView returnedText, wordCountTextView, errorTextView;
+    ToggleButton toggleButton;
+    ProgressBar progressBar;
+    SpeechRecognizer speech = null;
+    Intent recognizerIntent;
+    String LOG_TAG = "VoiceRecognitionActivity";
+    boolean stopListening = false;
     int count = 0;
-    private String finalResult = "";
+    String finalResult = "";
     Date startTime;
-    private int WordCountInterval = 5;
-    private int WordCountIntervalIncrementor= WordCountInterval;
-    private int wordCount;
+    int WordCountInterval = 5;
+    int WordCountIntervalIncrementor= WordCountInterval;
+    int wordCount;
     long avgWordCount;
     SharedPreferences preferences;
+    boolean isRecordingInProgress=false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -192,12 +194,15 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         Log.e(LOG_TAG, "FAILED " + errorMessage);
         errorTextView.setText(errorMessage);
         //toggleButton.setChecked(false);
-        recordingButton.setText("Start Recording");
-        if (!stopListening) {
+
+        if (!stopListening && errorCode == SpeechRecognizer.ERROR_NO_MATCH) {
             Log.i(LOG_TAG, Integer.toString(count));
             toggleButton.setChecked(true);
             //StartListeningSpeech();
             count++;
+        }
+        else{
+            recordingButton.setText("Start Recording");
         }
     }
 

@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ProgressBar;
@@ -85,13 +86,13 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-        String i = preferences.getString("edit_text_Silence", "5");
+        String i = preferences.getString("edit_text_Silence", getString(R.string.word_count_interval_default));
         Log.i(LOG_TAG, "Silence Settings Value " + i);
         int silenceSeconds = Integer.parseInt(i) * 1000;
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, silenceSeconds);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, silenceSeconds);
 
-        i = preferences.getString("minimum_speech_interval", "15");
+        i = preferences.getString("minimum_speech_interval", getString( R.string.minimum_speech_interval_default));
         Log.i(LOG_TAG, "Minimum Speech Interval " + i);
         int minimumInterval = Integer.parseInt(i) * 1000;
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, minimumInterval);
@@ -113,12 +114,14 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             recordingButton.setText(R.string.recording_stop_displaytext);
             isRecordingInProgress = true;
             stopListening = false;
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
             Log.d(LOG_TAG, "Stop Button Clicked");
             stopListening = true;
             StopListeningSpeech();
             recordingButton.setText(R.string.recording_start_displaytext);
             isRecordingInProgress = false;
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
 
@@ -192,7 +195,6 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         Log.i(LOG_TAG, "onResults");
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-        String text = "";
         if (matches != null && matches.size() > 0) {
             finalResult = finalResult + matches.get(0) + ". ";
             long intervalTime=intervalSpeechStopDate.getTime()-intervalSpeechStartDate.getTime();
@@ -236,7 +238,6 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                     Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                     v.vibrate(500);
                 }
-
             }
         }
     }

@@ -22,16 +22,42 @@
     <!--<string name="pref_default_display_name">John Smith</string>-->
 
     <!--<string name="pref_title_add_friends_to_messages">Add friends to messages</string>-->
-    <!--<string-array name="pref_example_list_titles">-->
-        <!--<item>Always</item>-->
-        <!--<item>When possible</item>-->
-        <!--<item>Never</item>-->
-    <!--</string-array>-->
-    <!--<string-array name="pref_example_list_values">-->
-        <!--<item>1</item>-->
-        <!--<item>0</item>-->
-        <!--<item>-1</item>-->
-    <!--</string-array>-->
+    <string-array name="languages">
+        <item>English (Australia)</item>
+        <item>English (Canada)</item>
+        <item>English (Ghana)</item>
+        <item>English (United Kingdom)</item>
+        <item>English (India)</item>
+        <item>English (Ireland)</item>
+        <item>English (Kenya)</item>
+        <item>English (New Zealand)</item>
+        <item>English (Nigeria)</item>
+        <item>English (Philippines)</item>
+        <item>English (South Africa)</item>
+        <item>English (Tanzania)</item>
+        <item>English (United States)</item>
+        <item>Spanish (Argentina)</item>
+        <item>English (Bolivia)</item>
+        <item>English (Chile)</item>
+    </string-array>
+    <string-array name="languages_values">
+        <item>en-AU</item>
+        <item>en-CA</item>
+        <item>en-GH</item>
+        <item>en-GB</item>
+        <item>en-IN</item>
+        <item>en-IE</item>
+        <item>en-KE</item>
+        <item>en-NZ</item>
+        <item>en-NG</item>
+        <item>en-PH</item>
+        <item>en-ZA</item>
+        <item>en-TZ</item>
+        <item>en-US</item>
+        <item>es-AR</item>
+        <item>en-BO</item>
+        <item>en-CL</item>
+    </string-array>
 
     <!-- Example settings for Data & Sync -->
     <!--<string name="pref_header_data_sync">Data &amp; sync</string>-->

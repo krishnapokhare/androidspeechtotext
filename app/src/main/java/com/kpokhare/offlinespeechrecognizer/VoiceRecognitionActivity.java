@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
@@ -36,10 +37,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     private static final int REQUEST_RECORD_PERMISSION = 100;
     private Button recordingButton;
-    private TextView returnedText;
-    private TextView wordCountTextView;
-    private TextView errorTextView;
-    //    ToggleButton toggleButton;
+    private TextView returnedText, timerTextView, wordCountTextView, errorTextView, keywordTextView;
     private ProgressBar progressBar;
     private SpeechRecognizer speech = null;
     private Intent recognizerIntent;
@@ -54,8 +52,11 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     private long avgWordCount;
     private SharedPreferences preferences;
     private boolean isRecordingInProgress = false;
-    private long totalSpeechTime=0;
-    private Date intervalSpeechStartDate,intervalSpeechStopDate;
+    private long totalSpeechTime = 0;
+    private Date intervalSpeechStartDate, intervalSpeechStopDate;
+    Handler mHandler;
+    private Runnable mRunnable;
+    int timerInSeconds=0;
 
 
     @Override
@@ -68,14 +69,16 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         wordCountTextView = findViewById(R.id.wordCountTextView);
         errorTextView = findViewById(R.id.errorTextView);
         recordingButton = findViewById(R.id.recordingButton);
+        timerTextView = findViewById(R.id.timerTextView);
+        keywordTextView=findViewById(R.id.keywordTextView);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-
         progressBar.setVisibility(View.INVISIBLE);
-        InitializeSpeechSettings();
+        //InitializeSpeechSettings();
     }
 
     private void InitializeSpeechSettings() {
+        totalSpeechTime = 0;
+        timerInSeconds=0;
         speech = SpeechRecognizer.createSpeechRecognizer(this);
         Log.i(LOG_TAG, "isRecognitionAvailable: " + SpeechRecognizer.isRecognitionAvailable(this));
         speech.setRecognitionListener(this);
@@ -92,7 +95,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, silenceSeconds);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, silenceSeconds);
 
-        i = preferences.getString("minimum_speech_interval", getString( R.string.minimum_speech_interval_default));
+        i = preferences.getString("minimum_speech_interval", getString(R.string.minimum_speech_interval_default));
         Log.i(LOG_TAG, "Minimum Speech Interval " + i);
         int minimumInterval = Integer.parseInt(i) * 1000;
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, minimumInterval);
@@ -100,7 +103,17 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         WordCountInterval = Integer.parseInt(j);
         WordCountIntervalIncrementor = WordCountInterval;
         returnedText.setText("");
+        wordCountTextView.setText("");
         finalResult = "";
+        mHandler = new Handler();
+        mHandler.post(mRunnable);
+        new Runnable() {
+            @Override
+            public void run() {
+                timerTextView.setText(String.valueOf(timerInSeconds++)+":000");
+                mHandler.postDelayed(this, 1000);
+            }
+        }.run();
 
     }
 
@@ -122,6 +135,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             recordingButton.setText(R.string.recording_start_displaytext);
             isRecordingInProgress = false;
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            mHandler.removeCallbacksAndMessages(mRunnable);
         }
     }
 
@@ -151,7 +165,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onBeginningOfSpeech() {
-        intervalSpeechStartDate=Calendar.getInstance().getTime();
+        intervalSpeechStartDate = Calendar.getInstance().getTime();
         Log.i(LOG_TAG, "onBeginningOfSpeech");
         progressBar.setIndeterminate(false);
         progressBar.setMax(10);
@@ -170,7 +184,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onEndOfSpeech() {
-        intervalSpeechStopDate=Calendar.getInstance().getTime();
+        intervalSpeechStopDate = Calendar.getInstance().getTime();
         Log.i(LOG_TAG, "onEndOfSpeech");
         progressBar.setIndeterminate(true);
         StopListeningSpeech();
@@ -178,15 +192,21 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onError(int errorCode) {
-        intervalSpeechStopDate=Calendar.getInstance().getTime();
+        intervalSpeechStopDate = Calendar.getInstance().getTime();
         String errorMessage = getErrorText(errorCode);
         Log.e(LOG_TAG, "FAILED " + errorMessage);
-        errorTextView.setText(errorMessage);
+        if(errorCode != SpeechRecognizer.ERROR_SPEECH_TIMEOUT)       {
+            errorTextView.setText(errorMessage);
+        }
 
         if (!stopListening && errorCode == SpeechRecognizer.ERROR_NO_MATCH) {
             StartListeningSpeech();
         } else {
+            CalculateKeywordCount();
             recordingButton.setText(R.string.recording_start_displaytext);
+            if(totalSpeechTime < WordCountInterval){
+                errorTextView.setText("Not enough time for counting average");
+            }
         }
     }
 
@@ -195,18 +215,24 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         Log.i(LOG_TAG, "onResults");
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        Log.d(LOG_TAG, "finalResult: " + finalResult);
+        Log.d(LOG_TAG, "Matches: " + matches.toString());
         if (matches != null && matches.size() > 0) {
             finalResult = finalResult + matches.get(0) + ". ";
-            long intervalTime=intervalSpeechStopDate.getTime()-intervalSpeechStartDate.getTime();
-            totalSpeechTime=totalSpeechTime+intervalTime/1000;
-            Log.d(LOG_TAG, "Total Speech Time: "+totalSpeechTime);
+            long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
+            totalSpeechTime = totalSpeechTime + intervalTime / 1000;
+            Log.d(LOG_TAG, "Total Speech Time: " + totalSpeechTime);
+            //CalculateAvgWordCount(totalSpeechTime, finalResult);
         }
         returnedText.setText(finalResult);
 
         if (!stopListening) {
-            Log.d(LOG_TAG, Integer.toString(count));
             StartListeningSpeech();
-            count++;
+        }else{
+            CalculateKeywordCount();
+            if(totalSpeechTime < WordCountInterval){
+                errorTextView.setText("Not enough time for counting average");
+            }
         }
     }
 
@@ -219,27 +245,37 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         ArrayList<String> matches = partialResults
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         if (matches != null && matches.size() > 0) {
-            intervalSpeechStopDate=Calendar.getInstance().getTime();
-            long intervalTime=intervalSpeechStopDate.getTime()-intervalSpeechStartDate.getTime();
-            long temporaryTotalSpeechTime=totalSpeechTime+intervalTime/1000;
-            Log.d(LOG_TAG, "Temporary Total Speech Time: "+temporaryTotalSpeechTime);
+            intervalSpeechStopDate = Calendar.getInstance().getTime();
+            long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
+            long temporaryTotalSpeechTime = totalSpeechTime + intervalTime / 1000;
+            Log.d(LOG_TAG, "Temporary Total Speech Time: " + temporaryTotalSpeechTime);
             String partialFinalResults = finalResult + matches.get(0);
             returnedText.setText(partialFinalResults);
 
             if (temporaryTotalSpeechTime >= WordCountIntervalIncrementor) {
-                wordCount = VoiceRecognitionActivity.countWordsUsingSplit(partialFinalResults);
-                Log.d(LOG_TAG, "Word Count:" + Integer.toString(wordCount));
-                avgWordCount = wordCount / (temporaryTotalSpeechTime / WordCountInterval);
-                Log.d(LOG_TAG, "Avg Word Count:" + Long.toString(avgWordCount));
-                WordCountIntervalIncrementor = WordCountIntervalIncrementor + WordCountInterval;
-                wordCountTextView.setText("Status:" + Long.toString(avgWordCount) + " words per " + Integer.toString(WordCountInterval) + " seconds.");
-                int minimumWordsBeforeVibration=Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
-                if(avgWordCount > minimumWordsBeforeVibration){
-                    Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    v.vibrate(500);
-                }
+                CalculateAvgWordCount(temporaryTotalSpeechTime, partialFinalResults);
             }
         }
+    }
+
+    private void CalculateKeywordCount(){
+        String keyword=preferences.getString("keyword",null);
+        Log.d(LOG_TAG,"keyword: "+keyword);
+        Log.d(LOG_TAG,"Final Result: "+finalResult);
+        if(keyword != null) {
+            keywordTextView.setText("Keyword Count: "+CountOfSubstringInString(finalResult,keyword));
+        }
+
+
+    }
+
+    private void CalculateAvgWordCount(long timeTaken, String words) {
+        wordCount = VoiceRecognitionActivity.countWordsUsingSplit(words);
+        Log.d(LOG_TAG, "Word Count:" + Integer.toString(wordCount));
+        avgWordCount = wordCount / (timeTaken / WordCountInterval);
+        Log.d(LOG_TAG, "Avg Word Count:" + Long.toString(avgWordCount));
+        WordCountIntervalIncrementor = WordCountIntervalIncrementor + WordCountInterval;
+        wordCountTextView.setText("Status:" + Long.toString(avgWordCount) + " words per " + Integer.toString(WordCountInterval) + " seconds.");
     }
 
     @Override
@@ -275,7 +311,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                 message = "error from server";
                 break;
             case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                message = "No speech input";
+                message = "Timed out due to no speech";
                 break;
             default:
                 message = "Didn't understand, please try again.";
@@ -324,6 +360,16 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         }
         String[] words = input.split("\\s+");
         return words.length;
+    }
+
+    public static int CountOfSubstringInString(String string, String substring) {
+        int count = 0;
+        int idx = 0;
+        while ((idx = string.indexOf(substring, idx)) != -1) {
+            idx++;
+            count++;
+        }
+        return count;
     }
 
     @Override

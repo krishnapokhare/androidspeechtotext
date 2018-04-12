@@ -183,6 +183,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             bindPreferenceSummaryToValue(findPreference("word_count_interval"));
             bindPreferenceSummaryToValue(findPreference("minimum_speech_interval"));
             bindPreferenceSummaryToValue(findPreference("minimum_words_vibration"));
+            bindPreferenceSummaryToValue(findPreference("keyword"));
         }
 
         @Override

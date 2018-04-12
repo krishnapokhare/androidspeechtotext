@@ -52,6 +52,7 @@
         android:defaultValue="@string/minimum_speech_interval_default"
         android:inputType="number"
         android:key="minimum_speech_interval"
+        android:numeric="integer"
         android:selectAllOnFocus="true"
         android:singleLine="true"
         android:title="Minimum Speech Interval" />
@@ -60,8 +61,17 @@
         android:defaultValue="@string/minimum_words_vibration"
         android:inputType="number"
         android:key="minimum_words_vibration"
+        android:numeric="integer"
         android:selectAllOnFocus="true"
         android:singleLine="true"
         android:title="Minimum Number of Words before vibration" />
+
+    <EditTextPreference
+        android:defaultValue="@string/keyword"
+        android:inputType="text"
+        android:key="keyword"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="Keyword" />
 
 </PreferenceScreen>

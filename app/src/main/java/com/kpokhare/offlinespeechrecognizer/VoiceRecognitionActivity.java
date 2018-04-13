@@ -84,8 +84,6 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         speech.setRecognitionListener(this);
         recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,
-                "en");
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
@@ -94,6 +92,12 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         int silenceSeconds = Integer.parseInt(i) * 1000;
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, silenceSeconds);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, silenceSeconds);
+
+        String language=preferences.getString("languages","en-US");
+        Log.i(LOG_TAG, "Language" + language);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,language);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE,language);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,language);
 
         i = preferences.getString("minimum_speech_interval", getString(R.string.minimum_speech_interval_default));
         Log.i(LOG_TAG, "Minimum Speech Interval " + i);
@@ -110,7 +114,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         new Runnable() {
             @Override
             public void run() {
-                timerTextView.setText(String.valueOf(timerInSeconds++)+":000");
+                timerTextView.setText(String.valueOf(timerInSeconds++));
                 mHandler.postDelayed(this, 1000);
             }
         }.run();
@@ -127,14 +131,14 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             recordingButton.setText(R.string.recording_stop_displaytext);
             isRecordingInProgress = true;
             stopListening = false;
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
             Log.d(LOG_TAG, "Stop Button Clicked");
             stopListening = true;
             StopListeningSpeech();
             recordingButton.setText(R.string.recording_start_displaytext);
             isRecordingInProgress = false;
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            //getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             mHandler.removeCallbacksAndMessages(mRunnable);
         }
     }
@@ -254,6 +258,11 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
             if (temporaryTotalSpeechTime >= WordCountIntervalIncrementor) {
                 CalculateAvgWordCount(temporaryTotalSpeechTime, partialFinalResults);
+                int minimumWordsBeforeVibration=Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
+                if(avgWordCount > minimumWordsBeforeVibration){
+                    Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                    v.vibrate(500);
+                }
             }
         }
     }
@@ -375,19 +384,20 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
-            // launch settings activity
+        super.onOptionsItemSelected(item);
+        switch (item.getItemId()){
+            case R.id.action_settings:
             startActivity(new Intent(VoiceRecognitionActivity.this, SettingsActivity.class));
             return true;
+            default:
+                return false;
         }
 
-        return super.onOptionsItemSelected(item);
+
     }
 }

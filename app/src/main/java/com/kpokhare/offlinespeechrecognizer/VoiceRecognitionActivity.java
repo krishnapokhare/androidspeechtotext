@@ -28,8 +28,10 @@ import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
+import java.sql.Array;
 import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -37,7 +39,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     private static final int REQUEST_RECORD_PERMISSION = 100;
     private Button recordingButton;
-    private TextView returnedText, timerTextView, wordCountTextView, errorTextView, keywordTextView;
+    private TextView returnedText, timerTextView, wordCountTextView, errorTextView, keywordTextView,titleTextView;
     private ProgressBar progressBar;
     private SpeechRecognizer speech = null;
     private Intent recognizerIntent;
@@ -57,6 +59,8 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     Handler mHandler;
     private Runnable mRunnable;
     int timerInSeconds=0;
+    String[] languages;
+    String[] languageValues;
 
 
     @Override
@@ -64,15 +68,18 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_voice_recognition);
 
+        titleTextView = findViewById(R.id.title);
         returnedText = findViewById(R.id.resultsTextView);
         progressBar = findViewById(R.id.progressBar1);
         wordCountTextView = findViewById(R.id.wordCountTextView);
         errorTextView = findViewById(R.id.errorTextView);
         recordingButton = findViewById(R.id.recordingButton);
         timerTextView = findViewById(R.id.timerTextView);
-        keywordTextView=findViewById(R.id.keywordTextView);
+        keywordTextView = findViewById(R.id.keywordTextView);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         progressBar.setVisibility(View.INVISIBLE);
+        languages = getResources().getStringArray(R.array.languages);
+        languageValues = getResources().getStringArray(R.array.languages_values);
         //InitializeSpeechSettings();
     }
 
@@ -107,7 +114,8 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         WordCountInterval = Integer.parseInt(j);
         WordCountIntervalIncrementor = WordCountInterval;
         returnedText.setText("");
-        wordCountTextView.setText("");
+        wordCountTextView.setText("Average Word Count: ");
+        keywordTextView.setText("Keyword Count: ");
         finalResult = "";
         mHandler = new Handler();
         mHandler.post(mRunnable);
@@ -335,6 +343,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         switch (requestCode) {
             case REQUEST_RECORD_PERMISSION:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.i(LOG_TAG,"Inside OnRequestPermissionsResult");
                     speech.startListening(recognizerIntent);
                 } else {
                     Toast.makeText(VoiceRecognitionActivity.this, "Permission Denied!", Toast
@@ -345,19 +354,31 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onResume() {
+        String selectedLanguage=preferences.getString("languages","en-US");
+        int langValueIndex = Arrays.asList(languageValues).indexOf(selectedLanguage);
+        String selectedLangName=languages[langValueIndex];
+        titleTextView.setText(selectedLangName);
+        Log.i(LOG_TAG,"Language Changed: "+selectedLanguage);
         super.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-
+//        if (speech != null) {
+//            speech.stopListening();
+//            speech.cancel();
+//            speech.destroy();
+//            Log.i(LOG_TAG, "destroy");
+//        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         if (speech != null) {
+            speech.stopListening();
+            speech.cancel();
             speech.destroy();
             Log.i(LOG_TAG, "destroy");
         }

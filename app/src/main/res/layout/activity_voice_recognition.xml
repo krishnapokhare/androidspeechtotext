@@ -63,18 +63,19 @@
 
     <TextView
         android:id="@+id/wordCountTextView"
-        android:textSize="20sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/keywordTextView"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="10dp"
-        android:height="30dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
+        android:height="30dp"
         android:background="@drawable/back"
+        android:backgroundTint="@android:color/holo_blue_dark"
+        android:text="Average Word Count: "
         android:textColor="@android:color/white"
-        android:backgroundTint="@android:color/holo_blue_dark" />
+        android:textSize="20sp" />
 
     <TextView
         android:id="@+id/errorTextView"
@@ -99,21 +100,23 @@
         android:layout_alignParentTop="true"
         android:layout_marginEnd="30dp"
         android:layout_marginTop="12dp"
-        android:text="0" />
+        android:text="0"
+        android:visibility="invisible" />
 
     <TextView
         android:id="@+id/keywordTextView"
-        android:textSize="20sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/errorTextView"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="10dp"
-        android:height="30dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
+        android:height="30dp"
         android:background="@drawable/back"
+        android:backgroundTint="@android:color/holo_blue_dark"
+        android:text="Keyword Count: "
         android:textColor="@android:color/white"
-        android:backgroundTint="@android:color/holo_blue_dark" />
+        android:textSize="20sp" />
 
 </RelativeLayout>

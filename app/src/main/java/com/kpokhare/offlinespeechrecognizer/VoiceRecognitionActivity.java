@@ -5,14 +5,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,6 +25,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,14 +39,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
+import java.util.UUID;
 
 public class VoiceRecognitionActivity extends AppCompatActivity implements RecognitionListener {
 
     private static final int REQUEST_RECORD_PERMISSION = 100;
     private Button recordingButton;
-    private TextView returnedText, timerTextView, wordCountTextView, errorTextView, keywordTextView,titleTextView;
+    private TextView timerTextView, wordCountTextView, errorTextView, keywordTextView,titleTextView;
+    private EditText returnedText;
+    private ImageView SpeakButton;
     private ProgressBar progressBar;
     private SpeechRecognizer speech = null;
+    private TextToSpeech textToSpeech = null;
     private Intent recognizerIntent;
     private String LOG_TAG = "VoiceRecognitionActivity";
     private boolean stopListening = false;
@@ -61,6 +71,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     int timerInSeconds=0;
     String[] languages;
     String[] languageValues;
+    boolean readyToSpeak=false;
 
 
     @Override
@@ -76,10 +87,12 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         recordingButton = findViewById(R.id.recordingButton);
         timerTextView = findViewById(R.id.timerTextView);
         keywordTextView = findViewById(R.id.keywordTextView);
+        SpeakButton =findViewById(R.id.textToSpeechImageView);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         progressBar.setVisibility(View.INVISIBLE);
         languages = getResources().getStringArray(R.array.languages);
         languageValues = getResources().getStringArray(R.array.languages_values);
+
         //InitializeSpeechSettings();
     }
 
@@ -131,15 +144,26 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     public void onRecordingBtnClick(View view) {
         if (!isRecordingInProgress) {
-            startTime = Calendar.getInstance().getTime();
-            Log.d(LOG_TAG, "Start Button Clicked");
-            errorTextView.setText("");
-            InitializeSpeechSettings();
-            StartListeningSpeech();
-            recordingButton.setText(R.string.recording_stop_displaytext);
-            isRecordingInProgress = true;
-            stopListening = false;
-            //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            if (ContextCompat.checkSelfPermission(VoiceRecognitionActivity.this, Manifest.permission.RECORD_AUDIO)
+                    == PackageManager.PERMISSION_GRANTED) {
+                startTime = Calendar.getInstance().getTime();
+                Log.d(LOG_TAG, "Start Button Clicked");
+                errorTextView.setText("");
+
+                InitializeSpeechSettings();
+                StartListeningSpeech();
+                recordingButton.setText(R.string.recording_stop_displaytext);
+                isRecordingInProgress = true;
+                stopListening = false;
+                //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                if (textToSpeech != null) {
+                    textToSpeech.stop();
+                    textToSpeech.shutdown();
+                }
+            }
+            else {
+                Toast.makeText(getApplicationContext(), "RECORD AUDIO PERMISSION DENIED", Toast.LENGTH_SHORT).show();
+            }
         } else {
             Log.d(LOG_TAG, "Stop Button Clicked");
             stopListening = true;
@@ -148,6 +172,34 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             isRecordingInProgress = false;
             //getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             mHandler.removeCallbacksAndMessages(mRunnable);
+            textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+                @Override
+                public void onInit(int status) {
+                    if(status != TextToSpeech.ERROR){
+                        textToSpeech.setLanguage(Locale.ENGLISH);
+                        readyToSpeak=true;
+                    }else{
+                        Log.i(LOG_TAG,"TTS Error:"+status);
+                        readyToSpeak=false;
+                    }
+                }
+            });
+        }
+    }
+
+    public void onTextToSpeechClick(View view) {
+        Log.i(LOG_TAG, "Speak button clicked");
+        Log.i(LOG_TAG, Boolean.toString(readyToSpeak));
+        if (readyToSpeak && returnedText.getText().toString() != "") {
+            String toSpeak = returnedText.getText().toString();
+            //Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
+            Bundle bundle = new Bundle();
+            bundle.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC);
+            try {
+                textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, bundle, UUID.randomUUID().toString());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -381,6 +433,10 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             speech.cancel();
             speech.destroy();
             Log.i(LOG_TAG, "destroy");
+        }
+        if(textToSpeech != null){
+            textToSpeech.stop();
+            textToSpeech.shutdown();
         }
     }
 

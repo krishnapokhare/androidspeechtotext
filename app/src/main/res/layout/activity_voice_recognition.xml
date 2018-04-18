@@ -34,32 +34,33 @@
 
     <Button
         android:id="@+id/recordingButton"
+        android:layout_width="287dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/progressBar1"
+        android:layout_marginBottom="10dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/progressBar1"
-        android:layout_centerHorizontal="true"
         android:background="@drawable/button_record_start"
-        android:text="Start Recording"
         android:onClick="onRecordingBtnClick"
+        android:text="Start Recording"
         android:textColor="#FFFFFF"
-        android:textSize="14sp"/>
+        android:textSize="14sp" />
 
-    <TextView
+    <EditText
         android:id="@+id/resultsTextView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:layout_above="@id/wordCountTextView"
+        android:layout_below="@+id/recordingButton"
+        android:layout_marginBottom="10dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
-        android:layout_below="@+id/recordingButton"
-        android:layout_above="@id/wordCountTextView"
         android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
+        android:autoText="true"
         android:background="@drawable/back"
-        android:text=""/>
+        android:text=""
+        android:gravity="top"/>
 
     <TextView
         android:id="@+id/wordCountTextView"
@@ -118,5 +119,16 @@
         android:text="Keyword Count: "
         android:textColor="@android:color/white"
         android:textSize="20sp" />
+
+    <ImageView
+        android:id="@+id/textToSpeechImageView"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignEnd="@+id/timerTextView"
+        android:layout_alignTop="@+id/recordingButton"
+        android:layout_marginEnd="-12dp"
+        android:background="@android:color/darker_gray"
+        android:onClick="onTextToSpeechClick"
+        app:srcCompat="@drawable/megaphone" />
 
 </RelativeLayout>

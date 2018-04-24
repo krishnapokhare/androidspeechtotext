@@ -1,12 +1,15 @@
 package com.kpokhare.offlinespeechrecognizer;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.media.AudioManager;
-import android.os.Handler;
+
+import android.os.AsyncTask;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
@@ -18,35 +21,37 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
+
 import android.widget.Button;
-import android.widget.CompoundButton;
+
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import org.w3c.dom.Text;
-
-import java.sql.Array;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class VoiceRecognitionActivity extends AppCompatActivity implements RecognitionListener {
 
     private static final int REQUEST_RECORD_PERMISSION = 100;
     private Button recordingButton;
-    private TextView timerTextView, wordCountTextView, errorTextView, keywordTextView,titleTextView;
+    private TextView wordCountTextView, errorTextView, keywordTextView,recordingLanguageTextView;
     private EditText returnedText;
     private ImageView SpeakButton;
     private ProgressBar progressBar;
@@ -63,15 +68,17 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     private int wordCount;
     private long avgWordCount;
     private SharedPreferences preferences;
+    public static SharedPreferences sharedPreferences;
     private boolean isRecordingInProgress = false;
     private long totalSpeechTime = 0;
     private Date intervalSpeechStartDate, intervalSpeechStopDate;
-    Handler mHandler;
+//    Handler mHandler;
     private Runnable mRunnable;
     int timerInSeconds=0;
     String[] languages;
     String[] languageValues;
     boolean readyToSpeak=false;
+    TextToSpeech textToSpeech1=null;
 
 
     @Override
@@ -79,20 +86,23 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_voice_recognition);
 
-        titleTextView = findViewById(R.id.title);
+        recordingLanguageTextView = findViewById(R.id.recordingLanguage);
+        //speakingLanguageTextView = findViewById(R.id.speakingLanguage);
         returnedText = findViewById(R.id.resultsTextView);
         progressBar = findViewById(R.id.progressBar1);
         wordCountTextView = findViewById(R.id.wordCountTextView);
         errorTextView = findViewById(R.id.errorTextView);
         recordingButton = findViewById(R.id.recordingButton);
-        timerTextView = findViewById(R.id.timerTextView);
+//        timerTextView = findViewById(R.id.timerTextView);
         keywordTextView = findViewById(R.id.keywordTextView);
-        SpeakButton =findViewById(R.id.textToSpeechImageView);
+        SpeakButton = findViewById(R.id.textToSpeechImageView);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPreferences = this.getPreferences(MODE_PRIVATE);
         progressBar.setVisibility(View.INVISIBLE);
         languages = getResources().getStringArray(R.array.languages);
         languageValues = getResources().getStringArray(R.array.languages_values);
-
+        //SaveSupportedLanguagesInSharedPreference();
+        new LoadSupportedLanguages().execute("test");
         //InitializeSpeechSettings();
     }
 
@@ -130,16 +140,35 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         wordCountTextView.setText("Average Word Count: ");
         keywordTextView.setText("Keyword Count: ");
         finalResult = "";
-        mHandler = new Handler();
-        mHandler.post(mRunnable);
-        new Runnable() {
-            @Override
-            public void run() {
-                timerTextView.setText(String.valueOf(timerInSeconds++));
-                mHandler.postDelayed(this, 1000);
-            }
-        }.run();
+    }
 
+    private void IntializeTextToSpeech(){
+        textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status == TextToSpeech.SUCCESS){
+                    String speechLang=preferences.getString("speakinglanguages","en-US");
+                    Log.i(LOG_TAG + " Speech Language ",speechLang);
+                    int result=textToSpeech.setLanguage(Locale.forLanguageTag(speechLang));
+                    if (result == TextToSpeech.LANG_MISSING_DATA
+                            || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Toast.makeText(getApplicationContext(), "This language is not supported", Toast.LENGTH_SHORT).show();
+//                        SpeakButton.setVisibility(View.INVISIBLE);
+                    }
+                    else {
+                        readyToSpeak = true;
+//                        SpeakButton.setVisibility(View.VISIBLE);
+                    }
+                }else if(status == TextToSpeech.ERROR){
+                    Log.i(LOG_TAG,"TTS Error:"+status);
+                    Toast.makeText(getApplicationContext(), "TTS Initialization failed", Toast.LENGTH_SHORT).show();
+                    readyToSpeak=false;
+                }
+                else {
+                    Log.i(LOG_TAG,"Status of text to speech:"+status);
+                }
+            }
+        });
     }
 
     public void onRecordingBtnClick(View view) {
@@ -156,9 +185,9 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                 isRecordingInProgress = true;
                 stopListening = false;
                 //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                if (textToSpeech != null) {
+                if (textToSpeech.isSpeaking()) {
                     textToSpeech.stop();
-                    textToSpeech.shutdown();
+//                    textToSpeech.shutdown();
                 }
             }
             else {
@@ -171,26 +200,23 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             recordingButton.setText(R.string.recording_start_displaytext);
             isRecordingInProgress = false;
             //getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            mHandler.removeCallbacksAndMessages(mRunnable);
-            textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-                @Override
-                public void onInit(int status) {
-                    if(status != TextToSpeech.ERROR){
-                        textToSpeech.setLanguage(Locale.ENGLISH);
-                        readyToSpeak=true;
-                    }else{
-                        Log.i(LOG_TAG,"TTS Error:"+status);
-                        readyToSpeak=false;
-                    }
-                }
-            });
+//            mHandler.removeCallbacksAndMessages(mRunnable);
+
         }
     }
 
     public void onTextToSpeechClick(View view) {
+        if(textToSpeech == null){
+            InitializeSpeechSettings();
+        }
         Log.i(LOG_TAG, "Speak button clicked");
-        Log.i(LOG_TAG, Boolean.toString(readyToSpeak));
+//        Log.i(LOG_TAG, Boolean.toString(readyToSpeak));
+        if(isRecordingInProgress){
+            Toast.makeText(getApplicationContext(),"Recording in Progress. Please click on Stop Recording before clicking on Listen button",Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (readyToSpeak && returnedText.getText().toString() != "") {
+            Log.i(LOG_TAG,"Ready to speak");
             String toSpeak = returnedText.getText().toString();
             //Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
             Bundle bundle = new Bundle();
@@ -201,10 +227,13 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                 ex.printStackTrace();
             }
         }
+        else{
+            Toast.makeText(getApplicationContext(), "No text present for speech.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void StartListeningSpeech() {
-        Log.i(LOG_TAG, "Checked");
+        Log.i(LOG_TAG, "Recording Started");
         progressBar.setVisibility(View.VISIBLE);
         progressBar.setIndeterminate(true);
         ActivityCompat.requestPermissions
@@ -215,7 +244,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private void StopListeningSpeech() {
-        Log.d(LOG_TAG, "Unchecked");
+        Log.d(LOG_TAG, "Recording Stopped");
         progressBar.setIndeterminate(false);
         progressBar.setVisibility(View.INVISIBLE);
         speech.stopListening();
@@ -243,7 +272,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onBufferReceived(byte[] buffer) {
-        Log.i(LOG_TAG, "onBufferReceived: " + buffer);
+        Log.i(LOG_TAG, "onBufferReceived: " + Arrays.toString(buffer));
     }
 
     @Override
@@ -280,8 +309,8 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         Log.d(LOG_TAG, "finalResult: " + finalResult);
-        Log.d(LOG_TAG, "Matches: " + matches.toString());
         if (matches != null && matches.size() > 0) {
+            Log.d(LOG_TAG, "Matches: " + matches.toString());
             finalResult = finalResult + matches.get(0) + ". ";
             long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
             totalSpeechTime = totalSpeechTime + intervalTime / 1000;
@@ -306,8 +335,8 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 //        long timeElapsedInMS = Calendar.getInstance().getTimeInMillis() - startTime.getTime();
 //        long timeElapsedInS = timeElapsedInMS / 1000;
         //Log.i(LOG_TAG, "Time Elapsed in sec:" + Long.toString(timeElapsedInS));
-        ArrayList<String> matches = partialResults
-                .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        // Calling Async method to show Partial results in the TextBox
+        ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         if (matches != null && matches.size() > 0) {
             intervalSpeechStopDate = Calendar.getInstance().getTime();
             long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
@@ -318,13 +347,14 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
             if (temporaryTotalSpeechTime >= WordCountIntervalIncrementor) {
                 CalculateAvgWordCount(temporaryTotalSpeechTime, partialFinalResults);
-                int minimumWordsBeforeVibration=Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
-                if(avgWordCount > minimumWordsBeforeVibration){
+                int minimumWordsBeforeVibration = Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
+                if (avgWordCount > minimumWordsBeforeVibration) {
                     Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                     v.vibrate(500);
                 }
             }
         }
+
     }
 
     private void CalculateKeywordCount(){
@@ -396,7 +426,15 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             case REQUEST_RECORD_PERMISSION:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Log.i(LOG_TAG,"Inside OnRequestPermissionsResult");
-                    speech.startListening(recognizerIntent);
+                    if(speech != null) {
+                        try {
+                            speech.startListening(recognizerIntent);
+                        }
+                        catch (Exception e){
+                            Log.e(LOG_TAG,e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
                 } else {
                     Toast.makeText(VoiceRecognitionActivity.this, "Permission Denied!", Toast
                             .LENGTH_SHORT).show();
@@ -409,8 +447,16 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         String selectedLanguage=preferences.getString("languages","en-US");
         int langValueIndex = Arrays.asList(languageValues).indexOf(selectedLanguage);
         String selectedLangName=languages[langValueIndex];
-        titleTextView.setText(selectedLangName);
+        //Toast.makeText(getApplicationContext(), recordingLanguageTextView.getText().toString() + speakingLanguageTextView.getText().toString(), Toast.LENGTH_SHORT).show();
+        recordingLanguageTextView.setText("Recording in :" +selectedLangName);
+        recordingLanguageTextView.setTextColor(Color.BLACK);
+        String speakingLanguage=preferences.getString("speakinglanguages","en-US");
+        String speakingLanguageName=Locale.forLanguageTag(speakingLanguage).getDisplayName();
+        //speakingLanguageTextView.setText("Speaking in :" +Locale.forLanguageTag(speakingLanguage).getDisplayName());
+        recordingLanguageTextView.setText("Recording in :" +selectedLangName + "\n"+"Speaking in :"+speakingLanguageName);
+        recordingLanguageTextView.setTextColor(Color.BLACK);
         Log.i(LOG_TAG,"Language Changed: "+selectedLanguage);
+        IntializeTextToSpeech();
         super.onResume();
     }
 
@@ -432,13 +478,23 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             speech.stopListening();
             speech.cancel();
             speech.destroy();
-            Log.i(LOG_TAG, "destroy");
+            speech=null;
         }
         if(textToSpeech != null){
             textToSpeech.stop();
             textToSpeech.shutdown();
+            textToSpeech = null;
         }
+        if(textToSpeech1!= null) {
+            textToSpeech1.stop();
+            textToSpeech1.shutdown();
+            textToSpeech1=null;
+        }
+        Log.i(LOG_TAG, "destroy method called");
     }
+
+
+
 
     private static int countWordsUsingSplit(String input) {
         if (input == null || input.isEmpty()) {
@@ -476,5 +532,58 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         }
 
 
+    }
+
+    private class LoadSupportedLanguages extends AsyncTask<String,Integer,String> {
+        protected String doInBackground(String... test) {
+            try {
+                if (!preferences.contains("langNames") || !preferences.contains("langCodes")) {
+                    final List<String> langCodes = new LinkedList<String>();
+                    final List<String> langNames = new LinkedList<String>();
+                    textToSpeech1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+                        @Override
+                        public void onInit(int status) {
+                            if (status == TextToSpeech.SUCCESS) {
+                                Set<Locale> languages = textToSpeech1.getAvailableLanguages();
+                                String speakingLang = "";
+                                List<Locale> sortedLanguages=new ArrayList<Locale>(languages);
+                                Collections.sort(sortedLanguages, new Comparator<Locale>() {
+                                    @Override
+                                    public int compare(Locale o1, Locale o2) {
+                                        return o1.getDisplayName().compareTo(o2.getDisplayName());
+                                    }
+                                });
+
+                                for (Locale lang : sortedLanguages) {
+//                            Log.i(LOG_TAG, lang.toString());
+                                    langCodes.add(lang.toLanguageTag());
+                                    langNames.add(lang.getDisplayName());
+                                }
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putString("langNames", TextUtils.join(",", langNames));
+                                editor.putString("langCodes", TextUtils.join(",", langCodes));
+                                editor.commit();
+                            }
+                        }
+                    });
+                    return "Loaded supported Languages";
+                } else {
+                    return "Supported Languages already loaded";
+                }
+            }
+            catch (Exception e){
+                e.printStackTrace();
+                return e.getMessage();
+            }
+        }
+
+        protected void onProgressUpdate(Integer... progress) {
+            Log.i(LOG_TAG,progress.toString());
+        }
+
+        protected void onPostExecute(String result) {
+            //showDialog("Downloaded " + result + " bytes");
+            Log.i(LOG_TAG,result);
+        }
     }
 }

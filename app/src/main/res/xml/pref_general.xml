@@ -55,6 +55,7 @@
         android:numeric="integer"
         android:selectAllOnFocus="true"
         android:singleLine="true"
+        android:summary="This number will be used to calculate average"
         android:title="Minimum Speech Interval" />
 
     <EditTextPreference
@@ -64,6 +65,7 @@
         android:numeric="integer"
         android:selectAllOnFocus="true"
         android:singleLine="true"
+        android:summary="Once the average exceeds this number, device will vibrate."
         android:title="Minimum Number of Words before vibration" />
 
     <EditTextPreference
@@ -72,13 +74,21 @@
         android:key="keyword"
         android:selectAllOnFocus="true"
         android:singleLine="true"
+        android:summary="This word will be used to count the number of instances"
         android:title="Keyword" />
 
     <ListPreference
+        android:defaultValue="en-US"
         android:entries="@array/languages"
         android:entryValues="@array/languages_values"
         android:key="languages"
-        android:title="Supported Languages"
-        android:defaultValue="en-US"/>
+        android:summary="This language will be used while recording voice."
+        android:title="Supported Languages while Listening" />
+
+    <ListPreference
+        android:defaultValue="en_US"
+        android:key="speakinglanguages"
+        android:summary="This language will be used while speaking the recorded vocie."
+        android:title="Supported Languages while Speaking" />
 
 </PreferenceScreen>

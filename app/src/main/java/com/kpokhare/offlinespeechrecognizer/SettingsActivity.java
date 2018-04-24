@@ -3,6 +3,7 @@ package com.kpokhare.offlinespeechrecognizer;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -12,6 +13,7 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.preference.PreferenceFragment;
@@ -21,7 +23,11 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -40,6 +46,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      * A preference value change listener that updates the preference's summary
      * to reflect its new value.
      */
+    static Context context;
+
+
     private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object value) {
@@ -122,6 +131,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setupActionBar();
+        context=getApplicationContext();
     }
 
     /**
@@ -161,6 +171,10 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 || GeneralPreferenceFragment.class.getName().equals(fragmentName);
     }
 
+    public static Context getAppContext() {
+        return context;
+    }
+
     /**
      * This fragment shows general preferences only. It is used when the
      * activity is showing a two-pane settings UI.
@@ -178,12 +192,38 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // updated to reflect the new value, per the Android Design
             // guidelines.
 
+
+
             bindPreferenceSummaryToValue(findPreference("edit_text_Silence"));
             bindPreferenceSummaryToValue(findPreference("word_count_interval"));
             bindPreferenceSummaryToValue(findPreference("minimum_speech_interval"));
             bindPreferenceSummaryToValue(findPreference("minimum_words_vibration"));
             bindPreferenceSummaryToValue(findPreference("keyword"));
             bindPreferenceSummaryToValue(findPreference("languages"));
+            bindPreferenceSummaryToValue(findPreference("speakinglanguages"));
+
+            ListPreference listPreferenceCategory = (ListPreference) findPreference("speakinglanguages");
+            if (listPreferenceCategory != null) {
+                Log.i("SETTINGSACTIVITY","Speaking Languages present");
+                SharedPreferences sharedPreferences=VoiceRecognitionActivity.sharedPreferences;
+                String langNamesArray=sharedPreferences.getString("langNames",null);
+                String langValuesArray=sharedPreferences.getString("langCodes",null);
+                String myEntries[]=new String[]{"English(United States)"};
+                String myEntryValues[]=new String[]{"en-US"};
+                if(langNamesArray != null) {
+                    myEntries = langNamesArray.split(",");
+                }
+                if(langValuesArray != null) {
+                    myEntryValues = langValuesArray.split(",");
+                }
+                listPreferenceCategory.setEntries(myEntries);
+                listPreferenceCategory.setEntryValues(myEntryValues);
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getAppContext());
+                String speakingLanguage=preferences.getString("speakinglanguages","en-US");
+                listPreferenceCategory.setValue(speakingLanguage);
+                String speakingLanguageDisplayName = Locale.forLanguageTag(speakingLanguage).getDisplayName();
+                listPreferenceCategory.setSummary(speakingLanguageDisplayName);
+            }
         }
 
     }

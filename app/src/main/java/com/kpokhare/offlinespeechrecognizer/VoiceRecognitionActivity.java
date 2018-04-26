@@ -12,6 +12,7 @@ import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -34,6 +35,10 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -79,6 +84,10 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     String[] languageValues;
     boolean readyToSpeak=false;
     TextToSpeech textToSpeech1=null;
+    DatabaseReference conversationDB;
+    private String recordingLangCode, recordingLangName;
+    static String DEVICE_ID = "";
+
 
 
     @Override
@@ -104,6 +113,9 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         //SaveSupportedLanguagesInSharedPreference();
         new LoadSupportedLanguages().execute("test");
         //InitializeSpeechSettings();
+
+        conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
+        DEVICE_ID = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     private void InitializeSpeechSettings() {
@@ -123,11 +135,11 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, silenceSeconds);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, silenceSeconds);
 
-        String language=preferences.getString("languages","en-US");
-        Log.i(LOG_TAG, "Language" + language);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,language);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE,language);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,language);
+        recordingLangCode = preferences.getString("languages", "en-US");
+        Log.i(LOG_TAG, "Language" + recordingLangCode);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, recordingLangCode);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, recordingLangCode);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, recordingLangCode);
 
         i = preferences.getString("minimum_speech_interval", getString(R.string.minimum_speech_interval_default));
         Log.i(LOG_TAG, "Minimum Speech Interval " + i);
@@ -189,8 +201,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                     textToSpeech.stop();
 //                    textToSpeech.shutdown();
                 }
-            }
-            else {
+            } else {
                 Toast.makeText(getApplicationContext(), "RECORD AUDIO PERMISSION DENIED", Toast.LENGTH_SHORT).show();
             }
         } else {
@@ -201,8 +212,17 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             isRecordingInProgress = false;
             //getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 //            mHandler.removeCallbacksAndMessages(mRunnable);
-
+            saveCurrentRecording(returnedText.getText().toString());
         }
+    }
+
+    private void saveCurrentRecording(String recordingText) {
+        if (recordingText == "") {
+            return;
+        }
+        UUID uniqueID = UUID.randomUUID();
+        Conversation conversation = new Conversation(uniqueID.toString(), recordingText, recordingLangCode, recordingLangName);
+        conversationDB.child(DEVICE_ID).child(uniqueID.toString()).setValue(conversation);
     }
 
     public void onTextToSpeechClick(View view) {
@@ -444,20 +464,21 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onResume() {
-        String selectedLanguage=preferences.getString("languages","en-US");
-        int langValueIndex = Arrays.asList(languageValues).indexOf(selectedLanguage);
-        String selectedLangName=languages[langValueIndex];
-        //Toast.makeText(getApplicationContext(), recordingLanguageTextView.getText().toString() + speakingLanguageTextView.getText().toString(), Toast.LENGTH_SHORT).show();
-        recordingLanguageTextView.setText("Recording in :" +selectedLangName);
-        recordingLanguageTextView.setTextColor(Color.BLACK);
+        recordingLangCode = preferences.getString("languages", "en-US");
+        recordingLangName = getRecordingLangName(recordingLangCode);
         String speakingLanguage=preferences.getString("speakinglanguages","en-US");
         String speakingLanguageName=Locale.forLanguageTag(speakingLanguage).getDisplayName();
         //speakingLanguageTextView.setText("Speaking in :" +Locale.forLanguageTag(speakingLanguage).getDisplayName());
-        recordingLanguageTextView.setText("Recording in :" +selectedLangName + "\n"+"Speaking in :"+speakingLanguageName);
+        recordingLanguageTextView.setText("Recording in :" + recordingLangName + "\n" + "Speaking in :" + speakingLanguageName);
         recordingLanguageTextView.setTextColor(Color.BLACK);
-        Log.i(LOG_TAG,"Language Changed: "+selectedLanguage);
         IntializeTextToSpeech();
         super.onResume();
+    }
+
+    private String getRecordingLangName(String langCode) {
+        int langValueIndex = Arrays.asList(languageValues).indexOf(langCode);
+        String selectedLangName = languages[langValueIndex];
+        return selectedLangName;
     }
 
     @Override
@@ -527,6 +548,8 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             case R.id.action_settings:
             startActivity(new Intent(VoiceRecognitionActivity.this, SettingsActivity.class));
             return true;
+            case R.id.action_conversations:
+                startActivity(new Intent(VoiceRecognitionActivity.this, ConversationsActivity.class));
             default:
                 return false;
         }

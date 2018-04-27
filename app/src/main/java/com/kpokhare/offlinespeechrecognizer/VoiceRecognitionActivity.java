@@ -116,6 +116,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
         conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
         DEVICE_ID = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+        Log.i(LOG_TAG, "DEVICEID:" + DEVICE_ID);
     }
 
     private void InitializeSpeechSettings() {
@@ -217,12 +218,13 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private void saveCurrentRecording(String recordingText) {
-        if (recordingText == "") {
-            return;
+        if (!recordingText.isEmpty()) {
+            UUID uniqueID = UUID.randomUUID();
+            Conversation conversation = new Conversation(uniqueID.toString(), recordingText, recordingLangCode, recordingLangName);
+            conversationDB.child(DEVICE_ID).child(uniqueID.toString()).setValue(conversation);
+        } else {
+            Log.i(LOG_TAG, "Recording Text is empty.");
         }
-        UUID uniqueID = UUID.randomUUID();
-        Conversation conversation = new Conversation(uniqueID.toString(), recordingText, recordingLangCode, recordingLangName);
-        conversationDB.child(DEVICE_ID).child(uniqueID.toString()).setValue(conversation);
     }
 
     public void onTextToSpeechClick(View view) {
@@ -494,6 +496,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     protected void onStop() {
+        Log.i(LOG_TAG, "stop method called");
         super.onStop();
         if (speech != null) {
             speech.stopListening();
@@ -511,7 +514,6 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             textToSpeech1.shutdown();
             textToSpeech1=null;
         }
-        Log.i(LOG_TAG, "destroy method called");
     }
 
 

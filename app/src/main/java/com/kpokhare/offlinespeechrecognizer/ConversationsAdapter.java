@@ -12,7 +12,7 @@ import java.util.List;
 
 public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdapter.ViewHolder> {
     private List<Conversation> ConversationList;
-    public ConversationsAdapterListener deleteConvListener;
+    public ConversationsAdapterListener itemClickListener;
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -29,10 +29,18 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             mTextView = v.findViewById(R.id.textView_convText);
             mLangNameTextView = v.findViewById(R.id.textView_convLangName);
             mDeleteConversation = v.findViewById(R.id.button_deleteConversation);
+
+            mView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    itemClickListener.textViewOnClick(v, getAdapterPosition());
+                }
+            });
+
             mDeleteConversation.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    deleteConvListener.deleteOnClick(v, getAdapterPosition());
+                    itemClickListener.deleteOnClick(v, getAdapterPosition());
                 }
             });
         }
@@ -41,7 +49,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     // Provide a suitable constructor (depends on the kind of dataset)
     public ConversationsAdapter(List<Conversation> conversationList, ConversationsAdapterListener listener) {
         ConversationList = conversationList;
-        deleteConvListener = listener;
+        itemClickListener = listener;
     }
 
     // Create new views (invoked by the layout manager)
@@ -73,6 +81,8 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
 
     public interface ConversationsAdapterListener {
         void deleteOnClick(View v, int position);
+
+        void textViewOnClick(View v, int position);
     }
 }
 

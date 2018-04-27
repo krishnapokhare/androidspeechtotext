@@ -1,20 +1,16 @@
 package com.kpokhare.offlinespeechrecognizer;
 
 import android.app.ActionBar;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.util.SortedList;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -23,11 +19,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
 
 import static com.kpokhare.offlinespeechrecognizer.VoiceRecognitionActivity.DEVICE_ID;
 
@@ -43,6 +36,7 @@ public class ConversationsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversations);
+        setTitle("Conversations");
         conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
         Log.i(LOG_TAG, "Database connected");
         convRecyclerView = (RecyclerView) findViewById(R.id.convRecyclerView);
@@ -62,6 +56,14 @@ public class ConversationsActivity extends AppCompatActivity {
                 String id = conversationList.get(position).ID;
                 conversationDB.child(DEVICE_ID).child(id).removeValue();
             }
+
+            @Override
+            public void textViewOnClick(View v, int position) {
+                String selectedItemContent = conversationList.get(position).Content;
+                Intent ConversationDetailsActivity = new Intent(ConversationsActivity.this, com.kpokhare.offlinespeechrecognizer.ConversationDetailsActivity.class);
+                ConversationDetailsActivity.putExtra("Conv_Content", selectedItemContent);
+                startActivity(ConversationDetailsActivity);
+            }
         });
         convRecyclerView.setAdapter(convAdapter);
         Log.i(LOG_TAG, "Setup completed");
@@ -79,6 +81,7 @@ public class ConversationsActivity extends AppCompatActivity {
                     Log.i(LOG_TAG, conversation.Content);
                     conversationList.add(conversation);
                 }
+                Collections.sort(conversationList);
                 convAdapter.notifyDataSetChanged();
             }
 

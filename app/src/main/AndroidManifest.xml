@@ -24,6 +24,7 @@
         <activity android:name=".VoiceRecognitionActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -40,10 +41,20 @@
         <activity
             android:name=".ConversationsActivity"
             android:parentActivityName=".VoiceRecognitionActivity">
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".VoiceRecognitionActivity" />
+        </activity>
+        <activity
+            android:name=".ConversationDetailsActivity"
+            android:parentActivityName=".ConversationsActivity">
+
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ConversationsActivity" />
         </activity>
     </application>
 

@@ -552,6 +552,10 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             return true;
             case R.id.action_conversations:
                 startActivity(new Intent(VoiceRecognitionActivity.this, ConversationsActivity.class));
+                return true;
+            case R.id.action_grewords:
+                startActivity(new Intent(VoiceRecognitionActivity.this, GreWordListActivity.class));
+                return true;
             default:
                 return false;
         }

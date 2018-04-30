@@ -159,26 +159,26 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
-                if(status == TextToSpeech.SUCCESS){
-                    String speechLang=preferences.getString("speakinglanguages","en-US");
-                    Log.i(LOG_TAG + " Speech Language ",speechLang);
-                    int result=textToSpeech.setLanguage(Locale.forLanguageTag(speechLang));
-                    if (result == TextToSpeech.LANG_MISSING_DATA
-                            || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        Toast.makeText(getApplicationContext(), "This language is not supported", Toast.LENGTH_SHORT).show();
-//                        SpeakButton.setVisibility(View.INVISIBLE);
-                    }
-                    else {
-                        readyToSpeak = true;
-//                        SpeakButton.setVisibility(View.VISIBLE);
-                    }
-                }else if(status == TextToSpeech.ERROR){
-                    Log.i(LOG_TAG,"TTS Error:"+status);
-                    Toast.makeText(getApplicationContext(), "TTS Initialization failed", Toast.LENGTH_SHORT).show();
-                    readyToSpeak=false;
-                }
-                else {
-                    Log.i(LOG_TAG,"Status of text to speech:"+status);
+                switch (status) {
+                    case TextToSpeech.SUCCESS:
+                        String speechLang = preferences.getString("speakinglanguages", "en-US");
+                        Log.i(LOG_TAG + " Speech Language ", speechLang);
+                        int result = textToSpeech.setLanguage(Locale.forLanguageTag(speechLang));
+                        if (result == TextToSpeech.LANG_MISSING_DATA
+                                || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                            Toast.makeText(getApplicationContext(), "This language is not supported", Toast.LENGTH_SHORT).show();
+                        } else {
+                            readyToSpeak = true;
+                        }
+                        break;
+                    case TextToSpeech.ERROR:
+                        Log.i(LOG_TAG, "TTS Error:" + status);
+                        Toast.makeText(getApplicationContext(), "TTS Initialization failed", Toast.LENGTH_SHORT).show();
+                        readyToSpeak = false;
+                        break;
+                    default:
+                        Log.i(LOG_TAG, "Status of text to speech:" + status);
+                        break;
                 }
             }
         });
@@ -591,7 +591,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                                 SharedPreferences.Editor editor = sharedPreferences.edit();
                                 editor.putString("langNames", TextUtils.join(",", langNames));
                                 editor.putString("langCodes", TextUtils.join(",", langCodes));
-                                editor.commit();
+                                editor.apply();
                             }
                         }
                     });

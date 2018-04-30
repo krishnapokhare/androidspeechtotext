@@ -4,7 +4,7 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId "com.kpokhare.offlinespeechrecognizer"
-        minSdkVersion 23
+        minSdkVersion 24
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
@@ -27,9 +27,11 @@ dependencies {
     implementation 'com.android.support:support-v4:27.1.1'
     implementation 'com.google.firebase:firebase-database:15.0.0'
     implementation 'com.google.android.gms:play-services-plus:15.0.0'
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.9.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
 }
 
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'io.fabric'

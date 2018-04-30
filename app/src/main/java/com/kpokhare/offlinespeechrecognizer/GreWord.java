@@ -1,13 +1,19 @@
 package com.kpokhare.offlinespeechrecognizer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GreWord {
     private String Name;
     private List<String> Synonyms;
 
+    public GreWord() {
+        this.Synonyms = new ArrayList<>();
+    }
+
     public GreWord(String name) {
         this.Name = name;
+        this.Synonyms = new ArrayList<String>();
     }
 
     public String getName() {

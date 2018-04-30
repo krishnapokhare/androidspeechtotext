@@ -2,15 +2,15 @@
 <RelativeLayout android:layout_height="match_parent"
     android:layout_width="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    android:paddingBottom="5dp"
-    android:paddingStart="@dimen/activity_left_margin"
-    android:paddingEnd="@dimen/activity_right_margin"
-    android:paddingTop="5dp"
+    android:paddingBottom="4dp"
+    android:paddingStart="2dp"
+    android:paddingEnd="2dp"
+    android:paddingTop="4dp"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="#33c4b3">
+    android:background="#1bb1e4">
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/cardView"
+        android:id="@+id/cardView_conversation"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

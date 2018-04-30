@@ -47,6 +47,11 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
+    public ConversationsAdapter(List<Conversation> conversationList) {
+        ConversationList = conversationList;
+    }
+
+    // Provide a suitable constructor (depends on the kind of dataset)
     public ConversationsAdapter(List<Conversation> conversationList, ConversationsAdapterListener listener) {
         ConversationList = conversationList;
         itemClickListener = listener;

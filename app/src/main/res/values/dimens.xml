@@ -9,4 +9,6 @@
     <dimen name="activity_left_margin">5dp</dimen>
     <dimen name="card_height">300dp</dimen>
     <dimen name="text_size">20sp</dimen>
+    <dimen name="text_size_medium">20sp</dimen>
+    <dimen name="text_size_small">14sp</dimen>
 </resources>

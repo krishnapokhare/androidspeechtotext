@@ -28,7 +28,7 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
         android:layout_below="@+id/recordingLanguage"
         android:layout_marginTop="5dp"
         android:paddingLeft="10dp"
@@ -43,7 +43,7 @@
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginTop="5dp"
-        android:layout_toLeftOf="@id/textToSpeechImageView"
+        android:layout_toStartOf="@id/textToSpeechImageView"
         android:background="@drawable/button_record_start"
         android:onClick="onRecordingBtnClick"
         android:text="Start Recording"
@@ -58,7 +58,7 @@
         android:layout_alignBottom="@+id/recordingButton"
         android:layout_alignEnd="@+id/resultsTextView"
         android:onClick="onTextToSpeechClick"
-        app:srcCompat="@drawable/megaphone" />
+        app:srcCompat="@drawable/ic_play_sound" />
 
     <EditText
         android:id="@+id/resultsTextView"

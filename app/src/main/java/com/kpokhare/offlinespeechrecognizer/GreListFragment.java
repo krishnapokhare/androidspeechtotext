@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +18,19 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.UUID;
+
+import static com.kpokhare.offlinespeechrecognizer.VoiceRecognitionActivity.DEVICE_ID;
 
 
 /**
@@ -26,7 +39,9 @@ import java.util.ArrayList;
 public class GreListFragment extends Fragment {
     ArrayList<GreWord> GreWords = new ArrayList<GreWord>();
     RecyclerView greWordsRecyclerView;
-
+    DatabaseReference GreWordListDB;
+    static final String LOG_TAG = "GreListFragmentActivity";
+    GreWordsAdapter greWordsAdapter;
 
     public GreListFragment() {
         // Required empty public constructor
@@ -35,33 +50,50 @@ public class GreListFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        GreWords.add(new GreWord("Similar"));
-        GreWords.add(new GreWord("very"));
-        GreWords.add(new GreWord("true"));
-        GreWords.add(new GreWord("Opportunity"));
+        GreWord word = new GreWord("aggravate");
+        word.addSynonyms("make worse");
+        word.addSynonyms("irritate");
+//        GreWords.add(word);
+//        word = new GreWord("entice");
+//        word.addSynonyms("attract");
+//        word.addSynonyms("lure");
+//        GreWords.add(word);
+//        word = new GreWord("endeavor");
+//        word.addSynonyms("to make an effort");
+//        word.addSynonyms("to try very hard");
+//        GreWords.add(word);
+//        word = new GreWord("affinity");
+//        word.addSynonyms("close connection");
+//        word.addSynonyms("relationship");
+//        GreWords.add(word);
+        GreWordListDB = FirebaseDatabase.getInstance().getReference("GRE_Words_List");
+        UUID uniqueID = UUID.randomUUID();
+        GreWordListDB.child(DEVICE_ID).child(uniqueID.toString()).setValue(word);
+        InitializeList();
         getActivity().setTitle("GRE Words List");
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        greWordsAdapter = new GreWordsAdapter(GreWords);
         View view = inflater.inflate(R.layout.fragment_gre_list, container, false);
         greWordsRecyclerView = (RecyclerView) view.findViewById(R.id.cardView);
         greWordsRecyclerView.setHasFixedSize(true);
         LinearLayoutManager MyLayoutManager = new LinearLayoutManager(getActivity());
         MyLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        if (GreWords.size() > 0 & greWordsRecyclerView != null) {
-            greWordsRecyclerView.setAdapter(new MyAdapter(GreWords));
+        if (greWordsRecyclerView != null) {
+            greWordsRecyclerView.setAdapter(greWordsAdapter);
         }
         greWordsRecyclerView.setLayoutManager(MyLayoutManager);
 
         return view;
     }
 
-    public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
+    public class GreWordsAdapter extends RecyclerView.Adapter<MyViewHolder> {
         private ArrayList<GreWord> list;
 
-        public MyAdapter(ArrayList<GreWord> Data) {
+        public GreWordsAdapter(ArrayList<GreWord> Data) {
             list = Data;
         }
 
@@ -76,9 +108,11 @@ public class GreListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(final MyViewHolder holder, int position) {
-            Log.i("Name", list.get(position).getName());
-            holder.titleTextView.setText(list.get(position).getName());
-            Log.i("TextViewValue", holder.titleTextView.getText().toString());
+//            Log.i("Name", list.get(position).getName());
+            GreWord word = list.get(position);
+            holder.titleTextView.setText(word.getName());
+            holder.synonymsTextView.setText(TextUtils.join(", ", word.getSynonyms()));
+//            Log.i("TextViewValue", holder.titleTextView.getText().toString());
 //            holder.coverImageView.setImageResource(list.get(position).getImageResourceId());
 //            holder.coverImageView.setTag(list.get(position).getImageResourceId());
 //            holder.likeImageView.setTag(R.drawable.ic_like);
@@ -94,9 +128,7 @@ public class GreListFragment extends Fragment {
     public class MyViewHolder extends RecyclerView.ViewHolder {
 
         public TextView titleTextView;
-        public ImageView coverImageView;
-        public ImageView likeImageView;
-        public ImageView shareImageView;
+        public TextView synonymsTextView;
 
         public MyViewHolder(View v) {
             super(v);
@@ -107,6 +139,9 @@ public class GreListFragment extends Fragment {
                     Toast.makeText(getContext(), titleTextView.getText().toString(), Toast.LENGTH_SHORT).show();
                 }
             });
+
+            synonymsTextView = (TextView) v.findViewById(R.id.synonymsTextView);
+
 //            coverImageView = (ImageView) v.findViewById(R.id.coverImageView);
 //            likeImageView = (ImageView) v.findViewById(R.id.likeImageView);
 //            shareImageView = (ImageView) v.findViewById(R.id.shareImageView);
@@ -158,6 +193,32 @@ public class GreListFragment extends Fragment {
 
 
         }
+    }
+
+    public void InitializeList() {
+
+        GreWordListDB.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Log.i(LOG_TAG, "Data changed in Database");
+                Log.i(LOG_TAG, DEVICE_ID);
+                Log.i(LOG_TAG, String.valueOf(dataSnapshot.getChildrenCount()));
+                Log.i(LOG_TAG, String.valueOf(dataSnapshot.child(DEVICE_ID).getChildrenCount()));
+                GreWords.clear();
+                for (DataSnapshot ds : dataSnapshot.child(DEVICE_ID).getChildren()) {
+                    GreWord greWord = ds.getValue(GreWord.class);
+                    Log.i(LOG_TAG, greWord.getName());
+                    GreWords.add(greWord);
+                }
+
+                greWordsAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.w(LOG_TAG, "loadPost:onCancelled", databaseError.toException());
+            }
+        });
     }
 
 }

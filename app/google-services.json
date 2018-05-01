@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "928567273845",
+    "firebase_url": "https://offlinespeechrecognizer.firebaseio.com",
+    "project_id": "offlinespeechrecognizer",
+    "storage_bucket": "offlinespeechrecognizer.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:928567273845:android:027bf1042663e567",
+        "android_client_info": {
+          "package_name": "com.kpokhare.offlinespeechrecognizer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "928567273845-p6l22mdn8rnfakvg0ivbl2fmla6og1de.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kpokhare.offlinespeechrecognizer",
+            "certificate_hash": "f60a1608d334a960b7f75f64452ec85131538280"
+          }
+        },
+        {
+          "client_id": "928567273845-sm4sm6ihmue0k6oi72reffpkhqiqq6h8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWDkhClpuAae5WF4THkxjJ9gpYvnZW_hc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "928567273845-sm4sm6ihmue0k6oi72reffpkhqiqq6h8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

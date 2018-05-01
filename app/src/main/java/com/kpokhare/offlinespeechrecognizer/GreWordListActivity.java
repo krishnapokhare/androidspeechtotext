@@ -20,7 +20,6 @@ public class GreWordListActivity extends AppCompatActivity {
 
         if (fragment == null) {
             fragment = new GreListFragment();
-            ;
             fm.beginTransaction()
                     .add(R.id.fragmentContainer, fragment)
                     .commit();

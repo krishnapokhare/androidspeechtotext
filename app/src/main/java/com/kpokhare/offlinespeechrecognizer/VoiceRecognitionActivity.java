@@ -48,6 +48,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -63,7 +64,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     private SpeechRecognizer speech = null;
     private TextToSpeech textToSpeech = null;
     private Intent recognizerIntent;
-    private String LOG_TAG = "VoiceRecognitionActivity";
+    private final String LOG_TAG = "VoiceRecognitionActivity";
     private boolean stopListening = false;
     private int count = 0;
     private String finalResult = "";
@@ -79,12 +80,12 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     private Date intervalSpeechStartDate, intervalSpeechStopDate;
 //    Handler mHandler;
     private Runnable mRunnable;
-    int timerInSeconds=0;
-    String[] languages;
-    String[] languageValues;
-    boolean readyToSpeak=false;
-    TextToSpeech textToSpeech1=null;
-    DatabaseReference conversationDB;
+    private int timerInSeconds = 0;
+    private String[] languages;
+    private String[] languageValues;
+    private boolean readyToSpeak = false;
+    private TextToSpeech textToSpeech1 = null;
+    private DatabaseReference conversationDB;
     private String recordingLangCode, recordingLangName;
     static String DEVICE_ID = "";
 
@@ -150,8 +151,8 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         WordCountInterval = Integer.parseInt(j);
         WordCountIntervalIncrementor = WordCountInterval;
         returnedText.setText("");
-        wordCountTextView.setText("Average Word Count: ");
-        keywordTextView.setText("Keyword Count: ");
+        wordCountTextView.setText(getString(R.string.average_word_count_text));
+        keywordTextView.setText(getString(R.string.keyword_count_text));
         finalResult = "";
     }
 
@@ -237,7 +238,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             Toast.makeText(getApplicationContext(),"Recording in Progress. Please click on Stop Recording before clicking on Listen button",Toast.LENGTH_SHORT).show();
             return;
         }
-        if (readyToSpeak && returnedText.getText().toString() != "") {
+        if (readyToSpeak && !Objects.equals(returnedText.getText().toString(), "")) {
             Log.i(LOG_TAG,"Ready to speak");
             String toSpeak = returnedText.getText().toString();
             //Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
@@ -320,7 +321,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             CalculateKeywordCount();
             recordingButton.setText(R.string.recording_start_displaytext);
             if(totalSpeechTime < WordCountInterval){
-                errorTextView.setText("Not enough time for counting average");
+                errorTextView.setText(R.string.Not_Enough_Time_ErrorMsg);
             }
         }
     }
@@ -346,7 +347,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         }else{
             CalculateKeywordCount();
             if(totalSpeechTime < WordCountInterval){
-                errorTextView.setText("Not enough time for counting average");
+                errorTextView.setText(R.string.Not_Enough_Time_Avg_ErrorMsg);
             }
         }
     }
@@ -372,7 +373,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                 int minimumWordsBeforeVibration = Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
                 if (avgWordCount > minimumWordsBeforeVibration) {
                     Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    v.vibrate(500);
+                    Objects.requireNonNull(v, "Vibrator service is returning as null.").vibrate(500);
                 }
             }
         }
@@ -384,7 +385,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         Log.d(LOG_TAG,"keyword: "+keyword);
         Log.d(LOG_TAG,"Final Result: "+finalResult);
         if(keyword != null) {
-            keywordTextView.setText("Keyword Count: "+CountOfSubstringInString(finalResult,keyword));
+            keywordTextView.setText(getString(R.string.keyword_count_text) + CountOfSubstringInString(finalResult, keyword));
         }
 
 
@@ -479,8 +480,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     private String getRecordingLangName(String langCode) {
         int langValueIndex = Arrays.asList(languageValues).indexOf(langCode);
-        String selectedLangName = languages[langValueIndex];
-        return selectedLangName;
+        return languages[langValueIndex];
     }
 
     @Override
@@ -527,7 +527,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         return words.length;
     }
 
-    public static int CountOfSubstringInString(String string, String substring) {
+    private static int CountOfSubstringInString(String string, String substring) {
         int count = 0;
         int idx = 0;
         while ((idx = string.indexOf(substring, idx)) != -1) {
@@ -607,7 +607,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         }
 
         protected void onProgressUpdate(Integer... progress) {
-            Log.i(LOG_TAG,progress.toString());
+            Log.i(LOG_TAG, Arrays.toString(progress));
         }
 
         protected void onPostExecute(String result) {

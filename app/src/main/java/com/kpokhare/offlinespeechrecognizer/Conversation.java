@@ -52,7 +52,7 @@ public class Conversation implements Comparable<Conversation> {
     @Override
     public int compareTo(@NonNull Conversation o) {
 
-        if (o == null || o.CreatedDate == null || this.CreatedDate == null) {
+        if (o.CreatedDate == null || this.CreatedDate == null) {
             return 0;
         }
         Log.i("compareToMethod", this.Content + "::::" + this.CreatedDate.toString() + "::::" + this.Content + "::::" + o.CreatedDate);

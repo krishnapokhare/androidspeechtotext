@@ -62,10 +62,9 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     public ConversationsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                               int viewType) {
         // create a new view
-        View v = (View) LayoutInflater.from(parent.getContext())
+        View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.conversations_content, parent, false);
-        ViewHolder vh = new ViewHolder(v);
-        return vh;
+        return new ViewHolder(v);
     }
 
     // Replace the contents of a view (invoked by the layout manager)

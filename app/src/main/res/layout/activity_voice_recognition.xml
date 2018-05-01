@@ -17,7 +17,7 @@
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:paddingTop="16dp"
-        android:text="Speech to Text"
+        android:text="@string/speech_to_text"
         android:textSize="15sp"
         android:visibility="visible" />
 
@@ -46,7 +46,7 @@
         android:layout_toStartOf="@id/textToSpeechImageView"
         android:background="@drawable/button_record_start"
         android:onClick="onRecordingBtnClick"
-        android:text="Start Recording"
+        android:text="@string/start_recording_button_text"
         android:textColor="#FFFFFF"
         android:textSize="14sp"
         android:layout_alignParentStart="true"/>
@@ -58,7 +58,8 @@
         android:layout_alignBottom="@+id/recordingButton"
         android:layout_alignEnd="@+id/resultsTextView"
         android:onClick="onTextToSpeechClick"
-        app:srcCompat="@drawable/ic_play_sound" />
+        app:srcCompat="@drawable/ic_play_sound"
+        android:contentDescription="Speak" />
 
     <EditText
         android:id="@+id/resultsTextView"
@@ -89,7 +90,7 @@
         android:height="30dp"
         android:background="@drawable/back"
         android:backgroundTint="@android:color/holo_blue_dark"
-        android:text="Average Word Count: "
+        android:text="@string/average_word_count_text"
         android:textColor="@android:color/white"
         android:textSize="20sp" />
 

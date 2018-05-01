@@ -6,8 +6,8 @@
     <item
         android:id="@+id/action_conversations"
         android:orderInCategory="1"
-        android:title="Conversations"
-        app:showAsAction="never"></item>
+        android:title="@string/conversations_menu_text"
+        app:showAsAction="never" />
     <item
         android:id="@+id/action_grewords"
         android:orderInCategory="2"

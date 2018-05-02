@@ -72,8 +72,9 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     public void onBindViewHolder(ViewHolder holder, int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        holder.mTextView.setText(ConversationList.get(position).Content);
-        holder.mLangNameTextView.setText(ConversationList.get(position).LanguageName);
+        Conversation conversation=ConversationList.get(position);
+        holder.mTextView.setText(conversation.Content);
+        holder.mLangNameTextView.setText(conversation.LanguageName);
 
     }
 

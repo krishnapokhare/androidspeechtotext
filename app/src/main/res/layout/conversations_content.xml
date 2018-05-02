@@ -27,6 +27,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="16dp"
+                    android:paddingBottom="16dp"
+                    android:paddingEnd="40dp"
+                    android:paddingStart="16dp"
+                    android:paddingTop="16dp"
                     android:textColor="#1bb1e4"
                     android:textSize="@dimen/text_size"
                     android:textStyle="bold" />

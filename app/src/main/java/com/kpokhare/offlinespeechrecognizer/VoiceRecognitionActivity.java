@@ -80,11 +80,11 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     private Date intervalSpeechStartDate, intervalSpeechStopDate;
 //    Handler mHandler;
     private Runnable mRunnable;
-    private int timerInSeconds = 0;
+    private int timerInSeconds=0;
     private String[] languages;
     private String[] languageValues;
-    private boolean readyToSpeak = false;
-    private TextToSpeech textToSpeech1 = null;
+    private boolean readyToSpeak=false;
+    private TextToSpeech textToSpeech1=null;
     private DatabaseReference conversationDB;
     private String recordingLangCode, recordingLangName;
     static String DEVICE_ID = "";
@@ -187,6 +187,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     public void onRecordingBtnClick(View view) {
         if (!isRecordingInProgress) {
+            CheckRecordingPermission();
             if (ContextCompat.checkSelfPermission(VoiceRecognitionActivity.this, Manifest.permission.RECORD_AUDIO)
                     == PackageManager.PERMISSION_GRANTED) {
                 startTime = Calendar.getInstance().getTime();
@@ -228,6 +229,16 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         }
     }
 
+    private void CheckRecordingPermission(){
+        if (ContextCompat.checkSelfPermission(VoiceRecognitionActivity.this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions
+                    (VoiceRecognitionActivity.this,
+                            new String[]{Manifest.permission.RECORD_AUDIO},
+                            REQUEST_RECORD_PERMISSION);
+        }
+    }
+
     public void onTextToSpeechClick(View view) {
         if(textToSpeech == null){
             InitializeSpeechSettings();
@@ -259,18 +270,21 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         Log.i(LOG_TAG, "Recording Started");
         progressBar.setVisibility(View.VISIBLE);
         progressBar.setIndeterminate(true);
-        ActivityCompat.requestPermissions
-                (VoiceRecognitionActivity.this,
-                        new String[]{Manifest.permission.RECORD_AUDIO},
-                        REQUEST_RECORD_PERMISSION);
+//        ActivityCompat.requestPermissions
+//                (VoiceRecognitionActivity.this,
+//                        new String[]{Manifest.permission.RECORD_AUDIO},
+//                        REQUEST_RECORD_PERMISSION);
+        if(speech != null){
+            speech.startListening(recognizerIntent);
+        }
         errorTextView.setText("");
     }
 
     private void StopListeningSpeech() {
-        Log.d(LOG_TAG, "Recording Stopped");
         progressBar.setIndeterminate(false);
         progressBar.setVisibility(View.INVISIBLE);
         speech.stopListening();
+        Log.d(LOG_TAG, "Recording Stopped");
     }
 
 
@@ -318,7 +332,11 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         if (!stopListening && errorCode == SpeechRecognizer.ERROR_NO_MATCH) {
             StartListeningSpeech();
         } else {
+            //StopListeningSpeech();
+            isRecordingInProgress=false;
             CalculateKeywordCount();
+            progressBar.setIndeterminate(false);
+            progressBar.setVisibility(View.INVISIBLE);
             recordingButton.setText(R.string.recording_start_displaytext);
             if(totalSpeechTime < WordCountInterval){
                 errorTextView.setText(R.string.Not_Enough_Time_ErrorMsg);
@@ -373,7 +391,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                 int minimumWordsBeforeVibration = Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
                 if (avgWordCount > minimumWordsBeforeVibration) {
                     Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    Objects.requireNonNull(v, "Vibrator service is returning as null.").vibrate(500);
+                    Objects.requireNonNull(v,"Vibrator service is returning as null.").vibrate(500);
                 }
             }
         }
@@ -385,7 +403,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         Log.d(LOG_TAG,"keyword: "+keyword);
         Log.d(LOG_TAG,"Final Result: "+finalResult);
         if(keyword != null) {
-            keywordTextView.setText(getString(R.string.keyword_count_text) + CountOfSubstringInString(finalResult, keyword));
+            keywordTextView.setText(getString(R.string.keyword_count_text)+CountOfSubstringInString(finalResult,keyword));
         }
 
 
@@ -451,7 +469,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                     Log.i(LOG_TAG,"Inside OnRequestPermissionsResult");
                     if(speech != null) {
                         try {
-                            speech.startListening(recognizerIntent);
+                            Log.i(LOG_TAG,"Permission Granted");
                         }
                         catch (Exception e){
                             Log.e(LOG_TAG,e.getMessage());

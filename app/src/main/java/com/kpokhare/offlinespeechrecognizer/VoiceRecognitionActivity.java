@@ -65,6 +65,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     private TextToSpeech textToSpeech = null;
     private Intent recognizerIntent;
     private final String LOG_TAG = "VoiceRecognitionActivity";
+    private final String LOG_TAG_DEBUG = "DebugVoiceRecognitionActivity";
     private boolean stopListening = false;
     private int count = 0;
     private String finalResult = "";
@@ -93,6 +94,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(LOG_TAG_DEBUG, "Method: onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_voice_recognition);
 
@@ -121,6 +123,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private void InitializeSpeechSettings() {
+        Log.d(LOG_TAG_DEBUG, "Method: InitializeSpeechSettings");
         totalSpeechTime = 0;
         timerInSeconds=0;
         speech = SpeechRecognizer.createSpeechRecognizer(this);
@@ -156,7 +159,8 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         finalResult = "";
     }
 
-    private void IntializeTextToSpeech(){
+    private void InitializeTextToSpeech() {
+        Log.d(LOG_TAG_DEBUG, "Method: InitializeTextToSpeech");
         textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
@@ -186,6 +190,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     public void onRecordingBtnClick(View view) {
+        Log.d(LOG_TAG_DEBUG, "Method: onRecordingBtnClick");
         if (!isRecordingInProgress) {
             CheckRecordingPermission();
             if (ContextCompat.checkSelfPermission(VoiceRecognitionActivity.this, Manifest.permission.RECORD_AUDIO)
@@ -220,6 +225,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private void saveCurrentRecording(String recordingText) {
+        Log.d(LOG_TAG_DEBUG, "Method: saveCurrentRecording");
         if (!recordingText.isEmpty()) {
             UUID uniqueID = UUID.randomUUID();
             Conversation conversation = new Conversation(uniqueID.toString(), recordingText, recordingLangCode, recordingLangName);
@@ -230,6 +236,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private void CheckRecordingPermission(){
+        Log.d(LOG_TAG_DEBUG, "Method: CheckRecordingPermission");
         if (ContextCompat.checkSelfPermission(VoiceRecognitionActivity.this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions
@@ -240,8 +247,9 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     public void onTextToSpeechClick(View view) {
+        Log.d(LOG_TAG_DEBUG, "Method: onTextToSpeechClick");
         if(textToSpeech == null){
-            InitializeSpeechSettings();
+            InitializeTextToSpeech();
         }
         Log.i(LOG_TAG, "Speak button clicked");
 //        Log.i(LOG_TAG, Boolean.toString(readyToSpeak));
@@ -267,7 +275,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private void StartListeningSpeech() {
-        Log.i(LOG_TAG, "Recording Started");
+        Log.d(LOG_TAG_DEBUG, "Method: StartListeningSpeech");
         progressBar.setVisibility(View.VISIBLE);
         progressBar.setIndeterminate(true);
 //        ActivityCompat.requestPermissions
@@ -281,47 +289,49 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private void StopListeningSpeech() {
+        Log.d(LOG_TAG_DEBUG, "Method: StopListeningSpeech");
         progressBar.setIndeterminate(false);
         progressBar.setVisibility(View.INVISIBLE);
         speech.stopListening();
-        Log.d(LOG_TAG, "Recording Stopped");
     }
 
 
     @Override
     public void onReadyForSpeech(Bundle params) {
-        Log.i(LOG_TAG, "onReadyForSpeech");
+        Log.d(LOG_TAG_DEBUG, "Method: onReadyForSpeech");
     }
 
     @Override
     public void onBeginningOfSpeech() {
+        Log.d(LOG_TAG_DEBUG, "Method: onBeginningOfSpeech");
         intervalSpeechStartDate = Calendar.getInstance().getTime();
-        Log.i(LOG_TAG, "onBeginningOfSpeech");
         progressBar.setIndeterminate(false);
         progressBar.setMax(10);
     }
 
     @Override
     public void onRmsChanged(float rmsdB) {
-        //Log.i(LOG_TAG, "onRmsChanged: " + rmsdB);
+        Log.d(LOG_TAG_DEBUG, "Method: onRmsChanged");
         progressBar.setProgress((int) rmsdB);
     }
 
     @Override
     public void onBufferReceived(byte[] buffer) {
+        Log.d(LOG_TAG_DEBUG, "Method: onBufferReceived");
         Log.i(LOG_TAG, "onBufferReceived: " + Arrays.toString(buffer));
     }
 
     @Override
     public void onEndOfSpeech() {
+        Log.d(LOG_TAG_DEBUG, "Method: onEndOfSpeech");
         intervalSpeechStopDate = Calendar.getInstance().getTime();
-        Log.i(LOG_TAG, "onEndOfSpeech");
         progressBar.setIndeterminate(true);
         StopListeningSpeech();
     }
 
     @Override
     public void onError(int errorCode) {
+        Log.d(LOG_TAG_DEBUG, "Method: onError");
         intervalSpeechStopDate = Calendar.getInstance().getTime();
         String errorMessage = getErrorText(errorCode);
         Log.e(LOG_TAG, "FAILED " + errorMessage);
@@ -346,7 +356,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onResults(Bundle results) {
-        Log.i(LOG_TAG, "onResults");
+        Log.d(LOG_TAG_DEBUG, "Method: onResults");
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         Log.d(LOG_TAG, "finalResult: " + finalResult);
@@ -372,7 +382,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onPartialResults(Bundle partialResults) {
-        Log.i(LOG_TAG, "onPartialResults");
+        Log.d(LOG_TAG_DEBUG, "Method: onPartialResults");
 //        long timeElapsedInMS = Calendar.getInstance().getTimeInMillis() - startTime.getTime();
 //        long timeElapsedInS = timeElapsedInMS / 1000;
         //Log.i(LOG_TAG, "Time Elapsed in sec:" + Long.toString(timeElapsedInS));
@@ -399,6 +409,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private void CalculateKeywordCount(){
+        Log.d(LOG_TAG_DEBUG, "Method: CalculateKeywordCount");
         String keyword=preferences.getString("keyword",null);
         Log.d(LOG_TAG,"keyword: "+keyword);
         Log.d(LOG_TAG,"Final Result: "+finalResult);
@@ -410,6 +421,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private void CalculateAvgWordCount(long timeTaken, String words) {
+        Log.d(LOG_TAG_DEBUG, "Method: CalculateAvgWordCount");
         wordCount = VoiceRecognitionActivity.countWordsUsingSplit(words);
         Log.d(LOG_TAG, "Word Count:" + Integer.toString(wordCount));
         avgWordCount = wordCount / (timeTaken / WordCountInterval);
@@ -420,10 +432,12 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onEvent(int eventType, Bundle params) {
+        Log.d(LOG_TAG_DEBUG, "Method: onEvent");
         Log.i(LOG_TAG + "onEvent", "onEvent");
     }
 
     private static String getErrorText(int errorCode) {
+        //Log.d(LOG_TAG_DEBUG,"IntializeTextToSpeech");
         String message;
         switch (errorCode) {
             case SpeechRecognizer.ERROR_AUDIO:
@@ -462,6 +476,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d(LOG_TAG_DEBUG, "Method: onRequestPermissionsResult");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_RECORD_PERMISSION:
@@ -485,6 +500,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onResume() {
+        Log.d(LOG_TAG_DEBUG, "Method: onResume");
         recordingLangCode = preferences.getString("languages", "en-US");
         recordingLangName = getRecordingLangName(recordingLangCode);
         String speakingLanguage=preferences.getString("speakinglanguages","en-US");
@@ -492,17 +508,19 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         //speakingLanguageTextView.setText("Speaking in :" +Locale.forLanguageTag(speakingLanguage).getDisplayName());
         recordingLanguageTextView.setText("Recording in :" + recordingLangName + "\n" + "Speaking in :" + speakingLanguageName);
         recordingLanguageTextView.setTextColor(Color.BLACK);
-        IntializeTextToSpeech();
+        InitializeTextToSpeech();
         super.onResume();
     }
 
     private String getRecordingLangName(String langCode) {
+        Log.d(LOG_TAG_DEBUG, "Method: getRecordingLangName");
         int langValueIndex = Arrays.asList(languageValues).indexOf(langCode);
         return languages[langValueIndex];
     }
 
     @Override
     protected void onPause() {
+        Log.d(LOG_TAG_DEBUG, "Method: onPause");
         super.onPause();
 //        if (speech != null) {
 //            speech.stopListening();
@@ -514,6 +532,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     protected void onStop() {
+        Log.d(LOG_TAG_DEBUG, "Method: onStop");
         Log.i(LOG_TAG, "stop method called");
         super.onStop();
         if (speech != null) {
@@ -538,6 +557,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
 
     private static int countWordsUsingSplit(String input) {
+        //Log.d(LOG_TAG_DEBUG,"countWordsUsingSplit");
         if (input == null || input.isEmpty()) {
             return 0;
         }
@@ -546,6 +566,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private static int CountOfSubstringInString(String string, String substring) {
+        //Log.d(LOG_TAG_DEBUG,"CountOfSubstringInString");
         int count = 0;
         int idx = 0;
         while ((idx = string.indexOf(substring, idx)) != -1) {
@@ -557,12 +578,14 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        Log.d(LOG_TAG_DEBUG, "Method: onCreateOptionsMenu");
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d(LOG_TAG_DEBUG, "Method: onOptionsItemSelected");
         super.onOptionsItemSelected(item);
         switch (item.getItemId()){
             case R.id.action_settings:
@@ -582,7 +605,9 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     }
 
     private class LoadSupportedLanguages extends AsyncTask<String,Integer,String> {
+        //Log.d(LOG_TAG_DEBUG,"LoadSupportedLanguages");
         protected String doInBackground(String... test) {
+            Log.d(LOG_TAG_DEBUG, "Method: doInBackground");
             try {
                 if (!preferences.contains("langNames") || !preferences.contains("langCodes")) {
                     final List<String> langCodes = new LinkedList<String>();
@@ -617,18 +642,19 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                 } else {
                     return "Supported Languages already loaded";
                 }
-            }
-            catch (Exception e){
+            } catch (Exception e){
                 e.printStackTrace();
                 return e.getMessage();
             }
         }
 
         protected void onProgressUpdate(Integer... progress) {
+            Log.d(LOG_TAG_DEBUG, "Method: onProgressUpdate");
             Log.i(LOG_TAG, Arrays.toString(progress));
         }
 
         protected void onPostExecute(String result) {
+            Log.d(LOG_TAG_DEBUG, "Method: onPostExecute");
             //showDialog("Downloaded " + result + " bytes");
             Log.i(LOG_TAG,result);
         }

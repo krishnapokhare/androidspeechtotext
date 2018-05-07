@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.kpokhare.offlinespeechrecognizer.VoiceRecognitionActivity.DEVICE_ID;
 
-public class ConversationsActivity extends AppCompatActivity {
+public class ConversationsActivity extends BaseActivity {
     static final String LOG_TAG = "ConversationsActivity";
 
     @Override

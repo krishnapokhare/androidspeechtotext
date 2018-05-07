@@ -8,7 +8,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-public class GreWordListActivity extends AppCompatActivity {
+public class GreWordListActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

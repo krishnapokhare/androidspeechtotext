@@ -6,7 +6,7 @@
     <item
         android:id="@+id/action_conversations"
         android:orderInCategory="1"
-        android:title="@string/conversations_menu_text"
+        android:title="@string/action_conversations"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_grewords"

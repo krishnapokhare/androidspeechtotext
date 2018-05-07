@@ -22,7 +22,7 @@
                 android:layout_height="wrap_content"
                 android:padding="8dp"
                 android:text=""
-                android:textColor="#33c4b3"
+                android:textColor="@color/primary"
                 android:textSize="@dimen/text_size"
                 android:textStyle="bold" />
 

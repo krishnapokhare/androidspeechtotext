@@ -22,7 +22,6 @@
         android:visibility="visible" />
 
 
-
     <ProgressBar
         android:id="@+id/progressBar1"
         style="?android:attr/progressBarStyleHorizontal"
@@ -38,6 +37,7 @@
         android:id="@+id/recordingButton"
         android:layout_width="302dp"
         android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
         android:layout_below="@+id/progressBar1"
         android:layout_marginBottom="10dp"
         android:layout_marginLeft="16dp"
@@ -48,8 +48,7 @@
         android:onClick="onRecordingBtnClick"
         android:text="@string/start_recording_button_text"
         android:textColor="#FFFFFF"
-        android:textSize="14sp"
-        android:layout_alignParentStart="true"/>
+        android:textSize="14sp" />
 
     <ImageView
         android:id="@+id/textToSpeechImageView"
@@ -57,9 +56,9 @@
         android:layout_height="40dp"
         android:layout_alignBottom="@+id/recordingButton"
         android:layout_alignEnd="@+id/resultsTextView"
+        android:contentDescription="Speak"
         android:onClick="onTextToSpeechClick"
-        app:srcCompat="@drawable/ic_play_sound"
-        android:contentDescription="Speak" />
+        app:srcCompat="@drawable/ic_play_sound" />
 
     <EditText
         android:id="@+id/resultsTextView"
@@ -74,9 +73,9 @@
         android:background="@drawable/back"
         android:gravity="top"
         android:inputType="textAutoCorrect|textMultiLine"
+        android:scrollHorizontally="false"
         android:singleLine="false"
-        android:text=""
-        android:scrollHorizontally="false"/>
+        android:text="" />
 
     <TextView
         android:id="@+id/wordCountTextView"
@@ -100,11 +99,11 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
         android:layout_marginTop="10dp"
         android:height="30dp"
         android:background="#e0e0e0"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
         android:text=""
         android:textColor="@android:color/black"
         android:textSize="20sp" />
@@ -124,8 +123,5 @@
         android:text="Keyword Count: "
         android:textColor="@android:color/white"
         android:textSize="20sp" />
-
-
-
 
 </RelativeLayout>

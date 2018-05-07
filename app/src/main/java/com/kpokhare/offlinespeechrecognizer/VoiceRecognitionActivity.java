@@ -18,10 +18,15 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -53,7 +58,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class VoiceRecognitionActivity extends AppCompatActivity implements RecognitionListener {
+public class VoiceRecognitionActivity extends BaseActivity  implements RecognitionListener {
 
     private static final int REQUEST_RECORD_PERMISSION = 100;
     private Button recordingButton;
@@ -585,31 +590,6 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         return count;
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        Log.d(LOG_TAG_DEBUG, "Method: onCreateOptionsMenu");
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        Log.d(LOG_TAG_DEBUG, "Method: onOptionsItemSelected");
-        super.onOptionsItemSelected(item);
-        switch (item.getItemId()){
-            case R.id.action_settings:
-            startActivity(new Intent(VoiceRecognitionActivity.this, SettingsActivity.class));
-            return true;
-            case R.id.action_conversations:
-                startActivity(new Intent(VoiceRecognitionActivity.this, ConversationsActivity.class));
-                return true;
-            case R.id.action_grewords:
-                startActivity(new Intent(VoiceRecognitionActivity.this, GreWordListActivity.class));
-                return true;
-            default:
-                return false;
-        }
-    }
 
     private class LoadSupportedLanguages extends AsyncTask<String,Integer,String> {
         //Log.d(LOG_TAG_DEBUG,"LoadSupportedLanguages");

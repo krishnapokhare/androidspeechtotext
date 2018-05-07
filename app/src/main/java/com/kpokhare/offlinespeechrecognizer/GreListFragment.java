@@ -51,17 +51,8 @@ public class GreListFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         GreWordListDB = FirebaseDatabase.getInstance().getReference("GRE_Words_List");
-        CreateSampleRecord();
         InitializeList();
         getActivity().setTitle("GRE Words List");
-    }
-
-    private void CreateSampleRecord() {
-        UUID uniqueID = UUID.randomUUID();
-        GreWord word = new GreWord("aggravate");
-        word.addSynonyms("make worse");
-        word.addSynonyms("irritate");
-        GreWordListDB.child(DEVICE_ID).child(uniqueID.toString()).setValue(word);
     }
 
     @Override
@@ -135,17 +126,11 @@ public class GreListFragment extends Fragment {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 Log.i(LOG_TAG, "Data changed in Database");
-                Log.i(LOG_TAG, DEVICE_ID);
-                Log.i(LOG_TAG, String.valueOf(dataSnapshot.getChildrenCount()));
-                Log.i(LOG_TAG, String.valueOf(dataSnapshot.child(DEVICE_ID).getChildrenCount()));
                 GreWords.clear();
-                for (DataSnapshot ds : dataSnapshot.child(DEVICE_ID).getChildren()) {
+                for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     GreWord greWord = ds.getValue(GreWord.class);
                     Log.i(LOG_TAG, greWord.getName());
                     GreWords.add(greWord);
-                }
-                if (GreWords.size() == 0) {
-                    CreateSampleRecord();
                 }
                 greWordsAdapter.notifyDataSetChanged();
             }

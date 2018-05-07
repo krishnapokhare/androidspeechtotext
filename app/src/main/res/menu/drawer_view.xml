@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_home"
+            android:title="@string/action_home"></item>
+        <item
+            android:id="@+id/nav_conversation"
+            android:icon="@drawable/ic_conversations"
+            android:title="@string/action_conversations" />
+        <item
+            android:id="@+id/nav_grewords"
+            android:icon="@drawable/ic_gre_words"
+            android:title="@string/action_grewords" />
+        <item
+            android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_settings"
+            android:title="@string/action_settings" />
+    </group>
+</menu>

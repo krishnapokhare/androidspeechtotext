@@ -293,9 +293,10 @@
     <string name="speech_to_text">Speech to Text</string>
     <string name="start_recording_button_text">Start Recording</string>
     <string name="average_word_count_text">Average Word Count:</string>
-    <string name="conversations_menu_text">Conversations</string>
+    <string name="action_conversations">Conversations</string>
     <string name="keyword_count_text">Keyword Count:</string>
     <string name="Not_Enough_Time_ErrorMsg">Not enough time for counting average</string>
     <string name="Not_Enough_Time_Avg_ErrorMsg">Not enough time for counting average</string>
     <string name="dialog_buttonOk_text">OK</string>
+    <string name="action_home">Home</string>
 </resources>

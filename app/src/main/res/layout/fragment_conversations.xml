@@ -7,7 +7,7 @@
     android:paddingEnd="2dp"
     android:paddingTop="4dp"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="#1bb1e4">
+    android:theme="@style/AppTheme">
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/cardView_conversation"

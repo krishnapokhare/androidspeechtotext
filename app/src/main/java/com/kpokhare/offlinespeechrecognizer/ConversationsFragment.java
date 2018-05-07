@@ -86,8 +86,6 @@ public class ConversationsFragment extends Fragment {
                             }
                         })
                         .show();
-
-
             }
         });
         conversationsRecyclerView.setAdapter(convAdapter);

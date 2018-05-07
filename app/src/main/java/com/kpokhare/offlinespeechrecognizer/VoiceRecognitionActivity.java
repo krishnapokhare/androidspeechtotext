@@ -227,9 +227,11 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     private void saveCurrentRecording(String recordingText) {
         Log.d(LOG_TAG_DEBUG, "Method: saveCurrentRecording");
         if (!recordingText.isEmpty()) {
-            UUID uniqueID = UUID.randomUUID();
-            Conversation conversation = new Conversation(uniqueID.toString(), recordingText, recordingLangCode, recordingLangName);
-            conversationDB.child(DEVICE_ID).child(uniqueID.toString()).setValue(conversation);
+            Conversation conversation = new Conversation(recordingText, recordingLangCode, recordingLangName);
+            conversationDB.child(DEVICE_ID);
+            conversationDB.child(DEVICE_ID).child(conversation.ID).setValue(conversation);
+
+            Log.i(LOG_TAG,"Saved in database");
         } else {
             Log.i(LOG_TAG, "Recording Text is empty.");
         }
@@ -292,7 +294,9 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         Log.d(LOG_TAG_DEBUG, "Method: StopListeningSpeech");
         progressBar.setIndeterminate(false);
         progressBar.setVisibility(View.INVISIBLE);
-        speech.stopListening();
+        if (speech != null) {
+            speech.stopListening();
+        }
     }
 
 
@@ -311,7 +315,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onRmsChanged(float rmsdB) {
-        Log.d(LOG_TAG_DEBUG, "Method: onRmsChanged");
+//        Log.d(LOG_TAG_DEBUG, "Method: onRmsChanged");
         progressBar.setProgress((int) rmsdB);
     }
 
@@ -334,7 +338,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         Log.d(LOG_TAG_DEBUG, "Method: onError");
         intervalSpeechStopDate = Calendar.getInstance().getTime();
         String errorMessage = getErrorText(errorCode);
-        Log.e(LOG_TAG, "FAILED " + errorMessage);
+        Log.e(LOG_TAG, "Error: " + errorMessage);
         if(errorCode != SpeechRecognizer.ERROR_SPEECH_TIMEOUT)       {
             errorTextView.setText(errorMessage);
         }
@@ -343,6 +347,10 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             StartListeningSpeech();
         } else {
             //StopListeningSpeech();
+//            if(speech != null){
+//                speech.stopListening();
+//            }
+            //speech.cancel();
             isRecordingInProgress=false;
             CalculateKeywordCount();
             progressBar.setIndeterminate(false);
@@ -500,6 +508,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
 
     @Override
     public void onResume() {
+        super.onResume();
         Log.d(LOG_TAG_DEBUG, "Method: onResume");
         recordingLangCode = preferences.getString("languages", "en-US");
         recordingLangName = getRecordingLangName(recordingLangCode);
@@ -509,7 +518,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
         recordingLanguageTextView.setText("Recording in :" + recordingLangName + "\n" + "Speaking in :" + speakingLanguageName);
         recordingLanguageTextView.setTextColor(Color.BLACK);
         InitializeTextToSpeech();
-        super.onResume();
+
     }
 
     private String getRecordingLangName(String langCode) {
@@ -533,7 +542,6 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
     @Override
     protected void onStop() {
         Log.d(LOG_TAG_DEBUG, "Method: onStop");
-        Log.i(LOG_TAG, "stop method called");
         super.onStop();
         if (speech != null) {
             speech.stopListening();
@@ -551,6 +559,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             textToSpeech1.shutdown();
             textToSpeech1=null;
         }
+        Log.d(LOG_TAG_DEBUG,"Method: onStop completed");
     }
 
 
@@ -600,8 +609,6 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
             default:
                 return false;
         }
-
-
     }
 
     private class LoadSupportedLanguages extends AsyncTask<String,Integer,String> {
@@ -615,10 +622,11 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                     textToSpeech1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
                         @Override
                         public void onInit(int status) {
+                            Log.d(LOG_TAG_DEBUG, "Method: ASYNC onInit");
                             if (status == TextToSpeech.SUCCESS) {
                                 Set<Locale> languages = textToSpeech1.getAvailableLanguages();
                                 String speakingLang = "";
-                                List<Locale> sortedLanguages=new ArrayList<Locale>(languages);
+                                List<Locale> sortedLanguages = new ArrayList<Locale>(languages);
                                 Collections.sort(sortedLanguages, new Comparator<Locale>() {
                                     @Override
                                     public int compare(Locale o1, Locale o2) {
@@ -627,7 +635,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                                 });
 
                                 for (Locale lang : sortedLanguages) {
-//                            Log.i(LOG_TAG, lang.toString());
+                                    Log.i(LOG_TAG, lang.toString());
                                     langCodes.add(lang.toLanguageTag());
                                     langNames.add(lang.getDisplayName());
                                 }
@@ -642,7 +650,7 @@ public class VoiceRecognitionActivity extends AppCompatActivity implements Recog
                 } else {
                     return "Supported Languages already loaded";
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
                 return e.getMessage();
             }

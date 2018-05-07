@@ -24,8 +24,8 @@ public class Conversation implements Comparable<Conversation> {
 
     }
 
-    public Conversation(String id, String content, String languageCode, String languageName) {
-        ID = id;
+    public Conversation(String content, String languageCode, String languageName) {
+        ID = UUID.randomUUID().toString();
         Content = content;
         LanguageCode = languageCode;
         LanguageName = languageName;

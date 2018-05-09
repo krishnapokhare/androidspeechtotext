@@ -71,6 +71,8 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
     private Intent recognizerIntent;
     private final String LOG_TAG = "VoiceRecognitionActivity";
     private final String LOG_TAG_DEBUG = "DebugVoiceRecognitionActivity";
+    private final String SILENCE_LENGTH = "5";
+    private final String MINIMUM_SPEECH_INTERVAL="15";
     private boolean stopListening = false;
     private int count = 0;
     private String finalResult = "";
@@ -125,6 +127,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
         conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
         DEVICE_ID = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
         Log.i(LOG_TAG, "DEVICEID:" + DEVICE_ID);
+        //PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
     }
 
     private void InitializeSpeechSettings() {
@@ -139,25 +142,19 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-        String i = preferences.getString("edit_text_Silence", getString(R.string.word_count_interval_default));
-        Log.i(LOG_TAG, "Silence Settings Value " + i);
-        int silenceSeconds = Integer.parseInt(i) * 1000;
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, silenceSeconds);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, silenceSeconds);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, SILENCE_LENGTH);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, SILENCE_LENGTH);
 
         recordingLangCode = preferences.getString("languages", "en-US");
         Log.i(LOG_TAG, "Language" + recordingLangCode);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, recordingLangCode);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, recordingLangCode);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, recordingLangCode);
-
-        i = preferences.getString("minimum_speech_interval", getString(R.string.minimum_speech_interval_default));
-        Log.i(LOG_TAG, "Minimum Speech Interval " + i);
-        int minimumInterval = Integer.parseInt(i) * 1000;
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, minimumInterval);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, MINIMUM_SPEECH_INTERVAL);
         String j = preferences.getString("word_count_interval", "5");
         WordCountInterval = Integer.parseInt(j);
         WordCountIntervalIncrementor = WordCountInterval;
+
         returnedText.setText("");
         wordCountTextView.setText(getString(R.string.average_word_count_text));
         keywordTextView.setText(getString(R.string.keyword_count_text));

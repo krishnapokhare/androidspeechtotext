@@ -16,7 +16,7 @@ import android.widget.FrameLayout;
 
 public class BaseActivity extends AppCompatActivity {
 
-    protected static final String LOG_TAG_DEBUG = "DebugActivity";
+    public static final String LOG_TAG_DEBUG = "DebugActivity";
     private DrawerLayout mDrawerLayout;
 
     @Override

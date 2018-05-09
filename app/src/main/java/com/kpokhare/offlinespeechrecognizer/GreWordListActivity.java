@@ -24,11 +24,5 @@ public class GreWordListActivity extends BaseActivity {
                     .add(R.id.fragmentContainer, fragment)
                     .commit();
         }
-
-
-        ActionBar bar = getSupportActionBar();
-        if (bar != null) {
-            bar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#33c4b3")));
-        }
     }
 }

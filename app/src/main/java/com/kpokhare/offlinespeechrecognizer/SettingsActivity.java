@@ -127,11 +127,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 }
                 listPreferenceCategory.setEntries(myEntries);
                 listPreferenceCategory.setEntryValues(myEntryValues);
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getAppContext());
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
                 String speakingLanguage = preferences.getString("speakinglanguages", "en-US");
                 listPreferenceCategory.setValue(speakingLanguage);
                 String speakingLanguageDisplayName = Locale.forLanguageTag(speakingLanguage).getDisplayName();
-                listPreferenceCategory.setSummary(speakingLanguageDisplayName);
+                //listPreferenceCategory.setSummary(speakingLanguageDisplayName);
             }
         }
     }

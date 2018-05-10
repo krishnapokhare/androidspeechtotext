@@ -17,9 +17,9 @@ import android.os.PersistableBundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceFragment;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.Nullable;
-import android.support.v14.preference.PreferenceFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.NavUtils;
 import android.preference.PreferenceManager;
@@ -57,6 +57,8 @@ import android.support.v7.preference.PreferenceFragmentCompat;
  * API Guide</a> for more information on developing a Settings UI.
  */
 public class SettingsActivity extends AppCompatPreferenceActivity {
+    private static Context context;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +68,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new GeneralPreferenceFragment())
                 .commit();
+        context=getApplicationContext();
     }
 
     @Override
@@ -94,6 +97,10 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public static Context getAppContext(){
+        return context;
+    }
+
     public static class GeneralPreferenceFragment extends PreferenceFragment
     {
 
@@ -103,11 +110,29 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
             // Load the preferences from an XML resource
             addPreferencesFromResource(R.xml.pref_general);
-        }
 
-        @Override
-        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-
+            ListPreference listPreferenceCategory = (ListPreference) findPreference("speakinglanguages");
+            if (listPreferenceCategory != null) {
+                Log.i("SETTINGSACTIVITY", "Speaking Languages present");
+                SharedPreferences sharedPreferences = VoiceRecognitionActivity.sharedPreferences;
+                String langNamesArray = sharedPreferences.getString("langNames", null);
+                String langValuesArray = sharedPreferences.getString("langCodes", null);
+                String myEntries[] = new String[]{"English(United States)"};
+                String myEntryValues[] = new String[]{"en-US"};
+                if (langNamesArray != null) {
+                    myEntries = langNamesArray.split(",");
+                }
+                if (langValuesArray != null) {
+                    myEntryValues = langValuesArray.split(",");
+                }
+                listPreferenceCategory.setEntries(myEntries);
+                listPreferenceCategory.setEntryValues(myEntryValues);
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getAppContext());
+                String speakingLanguage = preferences.getString("speakinglanguages", "en-US");
+                listPreferenceCategory.setValue(speakingLanguage);
+                String speakingLanguageDisplayName = Locale.forLanguageTag(speakingLanguage).getDisplayName();
+                listPreferenceCategory.setSummary(speakingLanguageDisplayName);
+            }
         }
     }
 }

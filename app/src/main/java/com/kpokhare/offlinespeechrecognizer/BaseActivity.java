@@ -14,15 +14,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 public class BaseActivity extends AppCompatActivity {
 
     public static final String LOG_TAG_DEBUG = "DebugActivity";
+    private FirebaseAuth mAuth;
     private DrawerLayout mDrawerLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 //        setContentView(R.layout.activity_base);
+        mAuth=FirebaseAuth.getInstance();
     }
 
     @Override
@@ -67,21 +71,7 @@ public class BaseActivity extends AppCompatActivity {
                 new NavigationView.OnNavigationItemSelectedListener() {
                     @Override
                     public boolean onNavigationItemSelected(MenuItem menuItem) {
-                        switch (menuItem.getItemId()) {
-                            case R.id.nav_home:
-                                startActivity(new Intent(getApplicationContext(),VoiceRecognitionActivity.class));
-                                break;
-                            case R.id.nav_conversation:
-                                startActivity(new Intent(getApplicationContext(), ConversationsActivity.class));
-                                break;
-                            case R.id.nav_grewords:
-                                startActivity(new Intent(getApplicationContext(), GreWordListActivity.class));
-                                break;
-                            case R.id.nav_settings:
-                                startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
-                                break;
-
-                        }
+                        RedirectOnMenuItemClick(menuItem);
                         // set item as selected to persist highlight
                         menuItem.setChecked(true);
                         // close drawer when item is tapped
@@ -107,9 +97,19 @@ public class BaseActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.d(LOG_TAG_DEBUG, "Method: onOptionsItemSelected");
         super.onOptionsItemSelected(item);
+        return RedirectOnMenuItemClick(item);
+    }
+
+    private boolean RedirectOnMenuItemClick(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 mDrawerLayout.openDrawer(GravityCompat.START);
+                return true;
+//            case R.id.action_callrecording:
+//                startActivity(new Intent(getApplicationContext(), CallRecordingActivity.class));
+//                return true;
+            case R.id.action_home:
+                startActivity(new Intent(getApplicationContext(),VoiceRecognitionActivity.class));
                 return true;
             case R.id.action_settings:
                 startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
@@ -120,8 +120,15 @@ public class BaseActivity extends AppCompatActivity {
             case R.id.action_grewords:
                 startActivity(new Intent(getApplicationContext(), GreWordListActivity.class));
                 return true;
+            case R.id.action_logout:
+                signOut();
             default:
                 return false;
         }
+    }
+
+    public void signOut(){
+        mAuth.signOut();
+        startActivity(new Intent(getApplicationContext(),LoginActivity.class));
     }
 }

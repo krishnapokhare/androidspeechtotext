@@ -24,6 +24,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.NavUtils;
 import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
+import android.support.v4.view.GravityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -43,6 +44,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import android.support.v7.preference.PreferenceFragmentCompat;
+
+import com.google.firebase.auth.FirebaseAuth;
 
 
 /**
@@ -91,10 +94,33 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+        super.onOptionsItemSelected(item);
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+//            case R.id.action_callrecording:
+//                startActivity(new Intent(getApplicationContext(), CallRecordingActivity.class));
+//                return true;
+            case R.id.action_home:
+                startActivity(new Intent(getApplicationContext(),VoiceRecognitionActivity.class));
+                return true;
+            case R.id.action_settings:
+                startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
+                return true;
+            case R.id.action_conversations:
+                startActivity(new Intent(getApplicationContext(), ConversationsActivity.class));
+                return true;
+            case R.id.action_grewords:
+                startActivity(new Intent(getApplicationContext(), GreWordListActivity.class));
+                return true;
+            case R.id.action_logout:
+                FirebaseAuth.getInstance().signOut();
+                startActivity(new Intent(getApplicationContext(),LoginActivity.class));
+                return true;
+            default:
+                return false;
         }
-        return super.onOptionsItemSelected(item);
     }
 
     public static Context getAppContext(){

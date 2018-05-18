@@ -48,7 +48,7 @@
                         android:textAlignment="center"
                         android:textColor="#FFFFFF"
                         android:textSize="@dimen/text_size"
-                        android:textStyle="bold" />W
+                        android:textStyle="bold" />
                 </LinearLayout>
             </FrameLayout>
         </LinearLayout>

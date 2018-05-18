@@ -16,8 +16,7 @@ import android.util.Log;
 
 import java.util.Locale;
 
-public class SettingsFragment extends PreferenceFragment
-{
+public class SettingsFragment extends PreferenceFragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

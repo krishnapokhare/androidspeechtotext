@@ -14,6 +14,7 @@
         android:layout_height="wrap_content"
         android:text="Speech To Text"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        android:textColor="@color/primary" />
+        android:textColor="@color/primary"
+        android:id="@+id/navbarTextView"/>
 
 </LinearLayout>

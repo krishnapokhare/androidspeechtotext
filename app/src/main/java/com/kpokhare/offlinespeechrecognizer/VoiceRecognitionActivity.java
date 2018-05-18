@@ -1,7 +1,6 @@
 package com.kpokhare.offlinespeechrecognizer;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -18,19 +17,11 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
-import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 
 import android.widget.Button;
@@ -56,23 +47,21 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-public class VoiceRecognitionActivity extends BaseActivity  implements RecognitionListener {
+public class VoiceRecognitionActivity extends BaseActivity implements RecognitionListener {
 
     private static final int REQUEST_RECORD_PERMISSION = 100;
     private Button recordingButton;
-    private TextView wordCountTextView, errorTextView, keywordTextView,recordingLanguageTextView;
+    private TextView wordCountTextView, errorTextView, keywordTextView, recordingLanguageTextView;
     private EditText returnedText;
     private ImageView SpeakButton;
     private ProgressBar progressBar;
     private SpeechRecognizer speech = null;
     private TextToSpeech textToSpeech = null;
     private Intent recognizerIntent;
-    private final String LOG_TAG = "VoiceRecognitionActivity";
-    private final String LOG_TAG_DEBUG = "DebugVoiceRecognitionActivity";
+    private final String LOG_TAG_DEBUG = "DebugActivity";
     private final String SILENCE_LENGTH = "5";
-    private final String MINIMUM_SPEECH_INTERVAL="15";
+    private final String MINIMUM_SPEECH_INTERVAL = "15";
     private boolean stopListening = false;
     private int count = 0;
     private String finalResult = "";
@@ -86,17 +75,16 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
     private boolean isRecordingInProgress = false;
     private long totalSpeechTime = 0;
     private Date intervalSpeechStartDate, intervalSpeechStopDate;
-//    Handler mHandler;
+    //    Handler mHandler;
     private Runnable mRunnable;
-    private int timerInSeconds=0;
+    private int timerInSeconds = 0;
     private String[] languages;
     private String[] languageValues;
-    private boolean readyToSpeak=false;
-    private TextToSpeech textToSpeech1=null;
+    private boolean readyToSpeak = false;
+    private TextToSpeech textToSpeech1 = null;
     private DatabaseReference conversationDB;
     private String recordingLangCode, recordingLangName;
     static String DEVICE_ID = "";
-
 
 
     @Override
@@ -126,16 +114,16 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
 
         conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
         DEVICE_ID = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
-        Log.i(LOG_TAG, "DEVICEID:" + DEVICE_ID);
+        Log.i(LOG_TAG_DEBUG, "DEVICEID:" + DEVICE_ID);
         //PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
     }
 
     private void InitializeSpeechSettings() {
         Log.d(LOG_TAG_DEBUG, "Method: InitializeSpeechSettings");
         totalSpeechTime = 0;
-        timerInSeconds=0;
+        timerInSeconds = 0;
         speech = SpeechRecognizer.createSpeechRecognizer(this);
-        Log.i(LOG_TAG, "isRecognitionAvailable: " + SpeechRecognizer.isRecognitionAvailable(this));
+        Log.d(LOG_TAG_DEBUG, "isRecognitionAvailable: " + SpeechRecognizer.isRecognitionAvailable(this));
         speech.setRecognitionListener(this);
         recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
@@ -146,7 +134,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, SILENCE_LENGTH);
 
         recordingLangCode = preferences.getString("languages", "en-US");
-        Log.i(LOG_TAG, "Language" + recordingLangCode);
+        Log.d(LOG_TAG_DEBUG, "Language" + recordingLangCode);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, recordingLangCode);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, recordingLangCode);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, recordingLangCode);
@@ -163,13 +151,13 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
 
     private void InitializeTextToSpeech() {
         Log.d(LOG_TAG_DEBUG, "Method: InitializeTextToSpeech");
-        textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
                 switch (status) {
                     case TextToSpeech.SUCCESS:
                         String speechLang = preferences.getString("speakinglanguages", "en-US");
-                        Log.i(LOG_TAG + " Speech Language ", speechLang);
+                        Log.d(LOG_TAG_DEBUG, "Speech Language " + speechLang);
                         int result = textToSpeech.setLanguage(Locale.forLanguageTag(speechLang));
                         if (result == TextToSpeech.LANG_MISSING_DATA
                                 || result == TextToSpeech.LANG_NOT_SUPPORTED) {
@@ -179,12 +167,12 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
                         }
                         break;
                     case TextToSpeech.ERROR:
-                        Log.i(LOG_TAG, "TTS Error:" + status);
+                        Log.d(LOG_TAG_DEBUG, "TTS Error:" + status);
                         Toast.makeText(getApplicationContext(), "TTS Initialization failed", Toast.LENGTH_SHORT).show();
                         readyToSpeak = false;
                         break;
                     default:
-                        Log.i(LOG_TAG, "Status of text to speech:" + status);
+                        Log.d(LOG_TAG_DEBUG, "Status of text to speech:" + status);
                         break;
                 }
             }
@@ -198,7 +186,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
             if (ContextCompat.checkSelfPermission(VoiceRecognitionActivity.this, Manifest.permission.RECORD_AUDIO)
                     == PackageManager.PERMISSION_GRANTED) {
                 startTime = Calendar.getInstance().getTime();
-                Log.d(LOG_TAG, "Start Button Clicked");
+                Log.d(LOG_TAG_DEBUG, "Start Button Clicked");
                 errorTextView.setText("");
 
                 InitializeSpeechSettings();
@@ -215,7 +203,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
                 Toast.makeText(getApplicationContext(), "RECORD AUDIO PERMISSION DENIED", Toast.LENGTH_SHORT).show();
             }
         } else {
-            Log.d(LOG_TAG, "Stop Button Clicked");
+            Log.d(LOG_TAG_DEBUG, "Stop Button Clicked");
             stopListening = true;
             StopListeningSpeech();
             recordingButton.setText(R.string.recording_start_displaytext);
@@ -223,6 +211,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
             //getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 //            mHandler.removeCallbacksAndMessages(mRunnable);
             saveCurrentRecording(returnedText.getText().toString());
+            new SaveCurrentRecording().execute(returnedText.getText().toString());
         }
     }
 
@@ -233,13 +222,13 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
             conversationDB.child(DEVICE_ID);
             conversationDB.child(DEVICE_ID).child(conversation.ID).setValue(conversation);
 
-            Log.i(LOG_TAG,"Saved in database");
+            Log.d(LOG_TAG_DEBUG, "Saved in database");
         } else {
-            Log.i(LOG_TAG, "Recording Text is empty.");
+            Log.d(LOG_TAG_DEBUG, "Recording Text is empty.");
         }
     }
 
-    private void CheckRecordingPermission(){
+    private void CheckRecordingPermission() {
         Log.d(LOG_TAG_DEBUG, "Method: CheckRecordingPermission");
         if (ContextCompat.checkSelfPermission(VoiceRecognitionActivity.this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -252,17 +241,17 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
 
     public void onTextToSpeechClick(View view) {
         Log.d(LOG_TAG_DEBUG, "Method: onTextToSpeechClick");
-        if(textToSpeech == null){
+        if (textToSpeech == null) {
             InitializeTextToSpeech();
         }
-        Log.i(LOG_TAG, "Speak button clicked");
-//        Log.i(LOG_TAG, Boolean.toString(readyToSpeak));
-        if(isRecordingInProgress){
-            Toast.makeText(getApplicationContext(),"Recording in Progress. Please click on Stop Recording before clicking on Listen button",Toast.LENGTH_SHORT).show();
+        Log.d(LOG_TAG_DEBUG, "Speak button clicked");
+//        Log.d(LOG_TAG_DEBUG, Boolean.toString(readyToSpeak));
+        if (isRecordingInProgress) {
+            Toast.makeText(getApplicationContext(), "Recording in Progress. Please click on Stop Recording before clicking on Listen button", Toast.LENGTH_SHORT).show();
             return;
         }
         if (readyToSpeak && !Objects.equals(returnedText.getText().toString(), "")) {
-            Log.i(LOG_TAG,"Ready to speak");
+            Log.d(LOG_TAG_DEBUG, "Ready to speak");
             String toSpeak = returnedText.getText().toString();
             //Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
             Bundle bundle = new Bundle();
@@ -272,8 +261,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-        }
-        else{
+        } else {
             Toast.makeText(getApplicationContext(), "No text present for speech.", Toast.LENGTH_SHORT).show();
         }
     }
@@ -286,7 +274,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
 //                (VoiceRecognitionActivity.this,
 //                        new String[]{Manifest.permission.RECORD_AUDIO},
 //                        REQUEST_RECORD_PERMISSION);
-        if(speech != null){
+        if (speech != null) {
             speech.startListening(recognizerIntent);
         }
         errorTextView.setText("");
@@ -324,7 +312,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
     @Override
     public void onBufferReceived(byte[] buffer) {
         Log.d(LOG_TAG_DEBUG, "Method: onBufferReceived");
-        Log.i(LOG_TAG, "onBufferReceived: " + Arrays.toString(buffer));
+        Log.d(LOG_TAG_DEBUG, "onBufferReceived: " + Arrays.toString(buffer));
     }
 
     @Override
@@ -340,8 +328,8 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
         Log.d(LOG_TAG_DEBUG, "Method: onError");
         intervalSpeechStopDate = Calendar.getInstance().getTime();
         String errorMessage = getErrorText(errorCode);
-        Log.e(LOG_TAG, "Error: " + errorMessage);
-        if(errorCode != SpeechRecognizer.ERROR_SPEECH_TIMEOUT)       {
+        Log.e(LOG_TAG_DEBUG, "Error: " + errorMessage);
+        if (errorCode != SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
             errorTextView.setText(errorMessage);
         }
 
@@ -353,12 +341,12 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
 //                speech.stopListening();
 //            }
             //speech.cancel();
-            isRecordingInProgress=false;
+            isRecordingInProgress = false;
             CalculateKeywordCount();
             progressBar.setIndeterminate(false);
             progressBar.setVisibility(View.INVISIBLE);
             recordingButton.setText(R.string.recording_start_displaytext);
-            if(totalSpeechTime < WordCountInterval){
+            if (totalSpeechTime < WordCountInterval) {
                 errorTextView.setText(R.string.Not_Enough_Time_ErrorMsg);
             }
         }
@@ -369,22 +357,22 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
         Log.d(LOG_TAG_DEBUG, "Method: onResults");
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-        Log.d(LOG_TAG, "finalResult: " + finalResult);
+        Log.d(LOG_TAG_DEBUG, "finalResult: " + finalResult);
         if (matches != null && matches.size() > 0) {
-            Log.d(LOG_TAG, "Matches: " + matches.toString());
+            Log.d(LOG_TAG_DEBUG, "Matches: " + matches.toString());
             finalResult = finalResult + matches.get(0) + ". ";
             long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
             totalSpeechTime = totalSpeechTime + intervalTime / 1000;
-            Log.d(LOG_TAG, "Total Speech Time: " + totalSpeechTime);
+            Log.d(LOG_TAG_DEBUG, "Total Speech Time: " + totalSpeechTime);
             //CalculateAvgWordCount(totalSpeechTime, finalResult);
         }
         returnedText.setText(finalResult);
 
         if (!stopListening) {
             StartListeningSpeech();
-        }else{
+        } else {
             CalculateKeywordCount();
-            if(totalSpeechTime < WordCountInterval){
+            if (totalSpeechTime < WordCountInterval) {
                 errorTextView.setText(R.string.Not_Enough_Time_Avg_ErrorMsg);
             }
         }
@@ -395,14 +383,14 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
         Log.d(LOG_TAG_DEBUG, "Method: onPartialResults");
 //        long timeElapsedInMS = Calendar.getInstance().getTimeInMillis() - startTime.getTime();
 //        long timeElapsedInS = timeElapsedInMS / 1000;
-        //Log.i(LOG_TAG, "Time Elapsed in sec:" + Long.toString(timeElapsedInS));
+        //Log.d(LOG_TAG_DEBUG, "Time Elapsed in sec:" + Long.toString(timeElapsedInS));
         // Calling Async method to show Partial results in the TextBox
         ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         if (matches != null && matches.size() > 0) {
             intervalSpeechStopDate = Calendar.getInstance().getTime();
             long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
             long temporaryTotalSpeechTime = totalSpeechTime + intervalTime / 1000;
-            Log.d(LOG_TAG, "Temporary Total Speech Time: " + temporaryTotalSpeechTime);
+            Log.d(LOG_TAG_DEBUG, "Temporary Total Speech Time: " + temporaryTotalSpeechTime);
             String partialFinalResults = finalResult + matches.get(0);
             returnedText.setText(partialFinalResults);
 
@@ -411,20 +399,20 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
                 int minimumWordsBeforeVibration = Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
                 if (avgWordCount > minimumWordsBeforeVibration) {
                     Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    Objects.requireNonNull(v,"Vibrator service is returning as null.").vibrate(500);
+                    Objects.requireNonNull(v, "Vibrator service is returning as null.").vibrate(500);
                 }
             }
         }
 
     }
 
-    private void CalculateKeywordCount(){
+    private void CalculateKeywordCount() {
         Log.d(LOG_TAG_DEBUG, "Method: CalculateKeywordCount");
-        String keyword=preferences.getString("keyword",null);
-        Log.d(LOG_TAG,"keyword: "+keyword);
-        Log.d(LOG_TAG,"Final Result: "+finalResult);
-        if(keyword != null) {
-            keywordTextView.setText(getString(R.string.keyword_count_text)+CountOfSubstringInString(finalResult,keyword));
+        String keyword = preferences.getString("keyword", null);
+        Log.d(LOG_TAG_DEBUG, "keyword: " + keyword);
+        Log.d(LOG_TAG_DEBUG, "Final Result: " + finalResult);
+        if (keyword != null) {
+            keywordTextView.setText(getString(R.string.keyword_count_text) + CountOfSubstringInString(finalResult, keyword));
         }
 
 
@@ -433,9 +421,9 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
     private void CalculateAvgWordCount(long timeTaken, String words) {
         Log.d(LOG_TAG_DEBUG, "Method: CalculateAvgWordCount");
         wordCount = VoiceRecognitionActivity.countWordsUsingSplit(words);
-        Log.d(LOG_TAG, "Word Count:" + Integer.toString(wordCount));
+        Log.d(LOG_TAG_DEBUG, "Word Count:" + Integer.toString(wordCount));
         avgWordCount = wordCount / (timeTaken / WordCountInterval);
-        Log.d(LOG_TAG, "Avg Word Count:" + Long.toString(avgWordCount));
+        Log.d(LOG_TAG_DEBUG, "Avg Word Count:" + Long.toString(avgWordCount));
         WordCountIntervalIncrementor = WordCountIntervalIncrementor + WordCountInterval;
         wordCountTextView.setText("Status:" + Long.toString(avgWordCount) + " words per " + Integer.toString(WordCountInterval) + " seconds.");
     }
@@ -443,7 +431,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
     @Override
     public void onEvent(int eventType, Bundle params) {
         Log.d(LOG_TAG_DEBUG, "Method: onEvent");
-        Log.i(LOG_TAG + "onEvent", "onEvent");
+        Log.d(LOG_TAG_DEBUG + "onEvent", "onEvent");
     }
 
     private static String getErrorText(int errorCode) {
@@ -491,13 +479,12 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
         switch (requestCode) {
             case REQUEST_RECORD_PERMISSION:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.i(LOG_TAG,"Inside OnRequestPermissionsResult");
-                    if(speech != null) {
+                    Log.d(LOG_TAG_DEBUG, "Inside OnRequestPermissionsResult");
+                    if (speech != null) {
                         try {
-                            Log.i(LOG_TAG,"Permission Granted");
-                        }
-                        catch (Exception e){
-                            Log.e(LOG_TAG,e.getMessage());
+                            Log.d(LOG_TAG_DEBUG, "Permission Granted");
+                        } catch (Exception e) {
+                            Log.e(LOG_TAG_DEBUG, e.getMessage());
                             e.printStackTrace();
                         }
                     }
@@ -514,8 +501,8 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
         Log.d(LOG_TAG_DEBUG, "Method: onResume");
         recordingLangCode = preferences.getString("languages", "en-US");
         recordingLangName = getRecordingLangName(recordingLangCode);
-        String speakingLanguage=preferences.getString("speakinglanguages","en-US");
-        String speakingLanguageName=Locale.forLanguageTag(speakingLanguage).getDisplayName();
+        String speakingLanguage = preferences.getString("speakinglanguages", "en-US");
+        String speakingLanguageName = Locale.forLanguageTag(speakingLanguage).getDisplayName();
         //speakingLanguageTextView.setText("Speaking in :" +Locale.forLanguageTag(speakingLanguage).getDisplayName());
         recordingLanguageTextView.setText("Recording in :" + recordingLangName + "\n" + "Speaking in :" + speakingLanguageName);
         recordingLanguageTextView.setTextColor(Color.BLACK);
@@ -537,7 +524,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
 //            speech.stopListening();
 //            speech.cancel();
 //            speech.destroy();
-//            Log.i(LOG_TAG, "destroy");
+//            Log.d(LOG_TAG_DEBUG, "destroy");
 //        }
     }
 
@@ -549,22 +536,20 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
             speech.stopListening();
             speech.cancel();
             speech.destroy();
-            speech=null;
+            speech = null;
         }
-        if(textToSpeech != null){
+        if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();
             textToSpeech = null;
         }
-        if(textToSpeech1!= null) {
+        if (textToSpeech1 != null) {
             textToSpeech1.stop();
             textToSpeech1.shutdown();
-            textToSpeech1=null;
+            textToSpeech1 = null;
         }
-        Log.d(LOG_TAG_DEBUG,"Method: onStop completed");
+        Log.d(LOG_TAG_DEBUG, "Method: onStop completed");
     }
-
-
 
 
     private static int countWordsUsingSplit(String input) {
@@ -588,7 +573,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
     }
 
 
-    private class LoadSupportedLanguages extends AsyncTask<String,Integer,String> {
+    private class LoadSupportedLanguages extends AsyncTask<String, Integer, String> {
         //Log.d(LOG_TAG_DEBUG,"LoadSupportedLanguages");
         protected String doInBackground(String... test) {
             Log.d(LOG_TAG_DEBUG, "Method: doInBackground");
@@ -612,7 +597,7 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
                                 });
 
                                 for (Locale lang : sortedLanguages) {
-                                    Log.i(LOG_TAG, lang.toString());
+//                                    Log.d(LOG_TAG_DEBUG, lang.toString());
                                     langCodes.add(lang.toLanguageTag());
                                     langNames.add(lang.getDisplayName());
                                 }
@@ -632,16 +617,29 @@ public class VoiceRecognitionActivity extends BaseActivity  implements Recogniti
                 return e.getMessage();
             }
         }
+    }
 
-        protected void onProgressUpdate(Integer... progress) {
-            Log.d(LOG_TAG_DEBUG, "Method: onProgressUpdate");
-            Log.i(LOG_TAG, Arrays.toString(progress));
-        }
+    private class SaveCurrentRecording extends AsyncTask<String, Integer, String> {
 
-        protected void onPostExecute(String result) {
-            Log.d(LOG_TAG_DEBUG, "Method: onPostExecute");
-            //showDialog("Downloaded " + result + " bytes");
-            Log.i(LOG_TAG,result);
+        @Override
+        protected String doInBackground(String... strings) {
+            try{
+                Log.d(LOG_TAG_DEBUG, "Method: saveCurrentRecording");
+                String recordingText=strings[0];
+                if (!recordingText.isEmpty()) {
+                    Conversation conversation = new Conversation(recordingText, recordingLangCode, recordingLangName);
+                    conversationDB.child(DEVICE_ID);
+                    conversationDB.child(DEVICE_ID).child(conversation.ID).setValue(conversation);
+                    Log.d(LOG_TAG_DEBUG, "Saved in database");
+                } else {
+                    Log.d(LOG_TAG_DEBUG, "Recording Text is empty.");
+                }
+            }
+            catch (Exception e){
+                Log.e(LOG_TAG_DEBUG,e.getMessage());
+                e.printStackTrace();
+            }
+            return "Completed saving recording in Database";
         }
     }
 }

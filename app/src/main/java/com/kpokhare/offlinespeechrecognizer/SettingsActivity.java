@@ -66,7 +66,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
         // Display the fragment as the main content.
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new GeneralPreferenceFragment())
@@ -162,5 +161,3 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         }
     }
 }
-
-

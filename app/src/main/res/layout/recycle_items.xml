@@ -9,12 +9,13 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="horizontal">
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:layout_weight="1">
 
             <TextView
                 android:id="@+id/titleTextView"
@@ -25,14 +26,6 @@
                 android:textColor="@color/primary"
                 android:textSize="@dimen/text_size"
                 android:textStyle="bold" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
             <TextView
                 android:id="@+id/synonymsTextView"
                 android:layout_width="match_parent"
@@ -40,7 +33,14 @@
                 android:padding="8dp"
                 android:text=""
                 android:textSize="14sp" />
+
         </LinearLayout>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_delete_action"
+            android:layout_marginEnd="5dp"
+            android:layout_gravity="center"/>
     </LinearLayout>
 
 </android.support.v7.widget.CardView>

@@ -19,7 +19,7 @@ import com.google.firebase.auth.FirebaseAuth;
 public class BaseActivity extends AppCompatActivity {
 
     public static final String LOG_TAG_DEBUG = "DebugActivity";
-    private FirebaseAuth mAuth;
+    protected FirebaseAuth mAuth;
     private DrawerLayout mDrawerLayout;
 
     @Override

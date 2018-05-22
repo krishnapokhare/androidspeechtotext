@@ -35,6 +35,7 @@ import android.widget.Toast;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -59,7 +60,7 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
     private SpeechRecognizer speech = null;
     private TextToSpeech textToSpeech = null;
     private Intent recognizerIntent;
-    private final String LOG_TAG_DEBUG = "DebugActivity";
+    private static final String LOG_TAG_DEBUG = "DebugActivity";
     private final String SILENCE_LENGTH = "5";
     private final String MINIMUM_SPEECH_INTERVAL = "15";
     private boolean stopListening = false;
@@ -81,8 +82,7 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
     private String[] languages;
     private String[] languageValues;
     private boolean readyToSpeak = false;
-    private TextToSpeech textToSpeech1 = null;
-    private DatabaseReference conversationDB;
+    private static DatabaseReference conversationDB;
     private String recordingLangCode, recordingLangName;
     static String DEVICE_ID = "";
 
@@ -109,11 +109,11 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
         languages = getResources().getStringArray(R.array.languages);
         languageValues = getResources().getStringArray(R.array.languages_values);
         //SaveSupportedLanguagesInSharedPreference();
-        new LoadSupportedLanguages().execute("test");
+        new LoadSupportedLanguages(this,preferences).execute("test");
         //InitializeSpeechSettings();
 
         conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
-        DEVICE_ID = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+        DEVICE_ID = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
         Log.i(LOG_TAG_DEBUG, "DEVICEID:" + DEVICE_ID);
         //PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
     }
@@ -210,8 +210,8 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
             isRecordingInProgress = false;
             //getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 //            mHandler.removeCallbacksAndMessages(mRunnable);
-            saveCurrentRecording(returnedText.getText().toString());
-            new SaveCurrentRecording().execute(returnedText.getText().toString());
+
+            new SaveCurrentRecording().execute(returnedText.getText().toString(),recordingLangCode,recordingLangName);
         }
     }
 
@@ -274,6 +274,9 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
 //                (VoiceRecognitionActivity.this,
 //                        new String[]{Manifest.permission.RECORD_AUDIO},
 //                        REQUEST_RECORD_PERMISSION);
+        if (speech != null) {
+            speech.stopListening();
+        }
         if (speech != null) {
             speech.startListening(recognizerIntent);
         }
@@ -543,11 +546,6 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
             textToSpeech.shutdown();
             textToSpeech = null;
         }
-        if (textToSpeech1 != null) {
-            textToSpeech1.stop();
-            textToSpeech1.shutdown();
-            textToSpeech1 = null;
-        }
         Log.d(LOG_TAG_DEBUG, "Method: onStop completed");
     }
 
@@ -573,7 +571,17 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
     }
 
 
-    private class LoadSupportedLanguages extends AsyncTask<String, Integer, String> {
+    static class LoadSupportedLanguages extends AsyncTask<String, Integer, String> {
+
+        private TextToSpeech textToSpeech1;
+        SharedPreferences preferences;
+        WeakReference<VoiceRecognitionActivity> activityRef;
+
+        public LoadSupportedLanguages(VoiceRecognitionActivity activity,SharedPreferences preferences) {
+            this.activityRef = new WeakReference<VoiceRecognitionActivity>(activity);
+            this.preferences=preferences;
+        }
+
         //Log.d(LOG_TAG_DEBUG,"LoadSupportedLanguages");
         protected String doInBackground(String... test) {
             Log.d(LOG_TAG_DEBUG, "Method: doInBackground");
@@ -581,7 +589,7 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
                 if (!preferences.contains("langNames") || !preferences.contains("langCodes")) {
                     final List<String> langCodes = new LinkedList<String>();
                     final List<String> langNames = new LinkedList<String>();
-                    textToSpeech1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+                    textToSpeech1 = new TextToSpeech(activityRef.get(), new TextToSpeech.OnInitListener() {
                         @Override
                         public void onInit(int status) {
                             Log.d(LOG_TAG_DEBUG, "Method: ASYNC onInit");
@@ -619,15 +627,17 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
         }
     }
 
-    private class SaveCurrentRecording extends AsyncTask<String, Integer, String> {
+    static class SaveCurrentRecording extends AsyncTask<String, Integer, String> {
 
         @Override
         protected String doInBackground(String... strings) {
             try{
                 Log.d(LOG_TAG_DEBUG, "Method: saveCurrentRecording");
                 String recordingText=strings[0];
+                String LangCode=strings[1];
+                String LangName=strings[2];
                 if (!recordingText.isEmpty()) {
-                    Conversation conversation = new Conversation(recordingText, recordingLangCode, recordingLangName);
+                    Conversation conversation = new Conversation(recordingText, LangCode, LangName);
                     conversationDB.child(DEVICE_ID);
                     conversationDB.child(DEVICE_ID).child(conversation.ID).setValue(conversation);
                     Log.d(LOG_TAG_DEBUG, "Saved in database");

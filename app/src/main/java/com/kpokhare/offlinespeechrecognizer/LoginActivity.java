@@ -76,7 +76,7 @@ public class LoginActivity extends AppCompatActivity {
     private void Redirect(FirebaseUser user) {
         hideProgressDialog();
         if (user != null) {
-            startActivity(new Intent(getApplicationContext(), VoiceRecognitionActivity.class));
+            startActivity(new Intent(getApplicationContext(), MainActivity.class));
         }
     }
 

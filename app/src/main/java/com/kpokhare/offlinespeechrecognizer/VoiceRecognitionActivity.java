@@ -109,7 +109,7 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
         languages = getResources().getStringArray(R.array.languages);
         languageValues = getResources().getStringArray(R.array.languages_values);
         //SaveSupportedLanguagesInSharedPreference();
-        new LoadSupportedLanguages(this,preferences).execute("test");
+        new LoadSupportedLanguages(this, preferences).execute("test");
         //InitializeSpeechSettings();
 
         conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
@@ -211,7 +211,7 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
             //getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 //            mHandler.removeCallbacksAndMessages(mRunnable);
 
-            new SaveCurrentRecording().execute(returnedText.getText().toString(),recordingLangCode,recordingLangName);
+            new SaveCurrentRecording().execute(returnedText.getText().toString(), recordingLangCode, recordingLangName);
         }
     }
 
@@ -391,22 +391,25 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
         ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         if (matches != null && matches.size() > 0) {
             intervalSpeechStopDate = Calendar.getInstance().getTime();
-            long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
-            long temporaryTotalSpeechTime = totalSpeechTime + intervalTime / 1000;
-            Log.d(LOG_TAG_DEBUG, "Temporary Total Speech Time: " + temporaryTotalSpeechTime);
-            String partialFinalResults = finalResult + matches.get(0);
-            returnedText.setText(partialFinalResults);
-
-            if (temporaryTotalSpeechTime >= WordCountIntervalIncrementor) {
-                CalculateAvgWordCount(temporaryTotalSpeechTime, partialFinalResults);
-                int minimumWordsBeforeVibration = Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
-                if (avgWordCount > minimumWordsBeforeVibration) {
-                    Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    Objects.requireNonNull(v, "Vibrator service is returning as null.").vibrate(500);
-                }
-            }
+            ProcessPartialResults(matches);
         }
 
+    }
+
+    private void ProcessPartialResults(ArrayList<String> matches) {
+        long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
+        long temporaryTotalSpeechTime = totalSpeechTime + intervalTime / 1000;
+        Log.d(LOG_TAG_DEBUG, "Temporary Total Speech Time: " + temporaryTotalSpeechTime);
+        String partialFinalResults = finalResult + matches.get(0);
+        returnedText.setText(partialFinalResults);
+        if (temporaryTotalSpeechTime >= WordCountIntervalIncrementor) {
+            CalculateAvgWordCount(temporaryTotalSpeechTime, partialFinalResults);
+            int minimumWordsBeforeVibration = Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
+            if (avgWordCount > minimumWordsBeforeVibration) {
+                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                Objects.requireNonNull(v, "Vibrator service is returning as null.").vibrate(500);
+            }
+        }
     }
 
     private void CalculateKeywordCount() {
@@ -577,9 +580,9 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
         SharedPreferences preferences;
         WeakReference<VoiceRecognitionActivity> activityRef;
 
-        public LoadSupportedLanguages(VoiceRecognitionActivity activity,SharedPreferences preferences) {
+        public LoadSupportedLanguages(VoiceRecognitionActivity activity, SharedPreferences preferences) {
             this.activityRef = new WeakReference<VoiceRecognitionActivity>(activity);
-            this.preferences=preferences;
+            this.preferences = preferences;
         }
 
         //Log.d(LOG_TAG_DEBUG,"LoadSupportedLanguages");
@@ -631,11 +634,11 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
 
         @Override
         protected String doInBackground(String... strings) {
-            try{
+            try {
                 Log.d(LOG_TAG_DEBUG, "Method: saveCurrentRecording");
-                String recordingText=strings[0];
-                String LangCode=strings[1];
-                String LangName=strings[2];
+                String recordingText = strings[0];
+                String LangCode = strings[1];
+                String LangName = strings[2];
                 if (!recordingText.isEmpty()) {
                     Conversation conversation = new Conversation(recordingText, LangCode, LangName);
                     conversationDB.child(DEVICE_ID);
@@ -644,9 +647,8 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
                 } else {
                     Log.d(LOG_TAG_DEBUG, "Recording Text is empty.");
                 }
-            }
-            catch (Exception e){
-                Log.e(LOG_TAG_DEBUG,e.getMessage());
+            } catch (Exception e) {
+                Log.e(LOG_TAG_DEBUG, e.getMessage());
                 e.printStackTrace();
             }
             return "Completed saving recording in Database";

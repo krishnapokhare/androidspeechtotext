@@ -16,17 +16,21 @@ import android.widget.FrameLayout;
 
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.util.Objects;
+
 public class BaseActivity extends AppCompatActivity {
 
     public static final String LOG_TAG_DEBUG = "DebugActivity";
     protected FirebaseAuth mAuth;
     private DrawerLayout mDrawerLayout;
+    public static String DEVICE_ID = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 //        setContentView(R.layout.activity_base);
         mAuth=FirebaseAuth.getInstance();
+        DEVICE_ID = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
     }
 
     @Override
@@ -108,7 +112,7 @@ public class BaseActivity extends AppCompatActivity {
 //                startActivity(new Intent(getApplicationContext(), CallRecordingActivity.class));
 //                return true;
             case R.id.action_home:
-                startActivity(new Intent(getApplicationContext(),VoiceRecognitionActivity.class));
+                startActivity(new Intent(getApplicationContext(), MainActivity.class));
                 return true;
             case R.id.action_settings:
                 startActivity(new Intent(getApplicationContext(), SettingsActivity.class));

@@ -102,7 +102,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 //                startActivity(new Intent(getApplicationContext(), CallRecordingActivity.class));
 //                return true;
             case R.id.action_home:
-                startActivity(new Intent(getApplicationContext(),VoiceRecognitionActivity.class));
+                startActivity(new Intent(getApplicationContext(), MainActivity.class));
                 return true;
             case R.id.action_settings:
                 startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
@@ -139,7 +139,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             ListPreference listPreferenceCategory = (ListPreference) findPreference("speakinglanguages");
             if (listPreferenceCategory != null) {
                 Log.i("SETTINGSACTIVITY", "Speaking Languages present");
-                SharedPreferences sharedPreferences = VoiceRecognitionActivity.sharedPreferences;
+                SharedPreferences sharedPreferences = getActivity().getPreferences(MODE_PRIVATE);
                 String langNamesArray = sharedPreferences.getString("langNames", null);
                 String langValuesArray = sharedPreferences.getString("langCodes", null);
                 String myEntries[] = new String[]{"English(United States)"};

@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.kpokhare.offlinespeechrecognizer.VoiceRecognitionActivity.DEVICE_ID;
+import static com.kpokhare.offlinespeechrecognizer.BaseActivity.DEVICE_ID;
 
 
 public class ConversationsFragment extends Fragment {

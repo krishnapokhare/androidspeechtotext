@@ -84,7 +84,7 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
     private boolean readyToSpeak = false;
     private static DatabaseReference conversationDB;
     private String recordingLangCode, recordingLangName;
-    static String DEVICE_ID = "";
+//    static String DEVICE_ID = "";
 
 
     @Override
@@ -113,7 +113,7 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
         //InitializeSpeechSettings();
 
         conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
-        DEVICE_ID = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+
         Log.i(LOG_TAG_DEBUG, "DEVICEID:" + DEVICE_ID);
         //PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
     }

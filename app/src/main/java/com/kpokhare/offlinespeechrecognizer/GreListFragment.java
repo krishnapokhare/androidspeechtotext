@@ -30,8 +30,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 
-import static com.kpokhare.offlinespeechrecognizer.VoiceRecognitionActivity.DEVICE_ID;
-
 
 /**
  * A simple {@link Fragment} subclass.

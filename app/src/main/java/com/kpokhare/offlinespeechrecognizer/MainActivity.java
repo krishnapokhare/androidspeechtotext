@@ -7,27 +7,40 @@ import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import static com.kpokhare.offlinespeechrecognizer.BaseActivity.LOG_TAG_DEBUG;
 
-public class MainActivity extends AppCompatActivity implements RecognitionListener {
+public class MainActivity extends BaseActivity implements RecognitionListener {
     private static final String MINIMUM_SPEECH_INTERVAL = "15";
     private static final String SILENCE_LENGTH = "5";
     boolean isRecording = false;
     FloatingActionButton fab;
     private SpeechRecognizer speech;
     private Intent recognizerIntent;
-    private SharedPreferences preferences;
+    //    private SharedPreferences preferences;
     private String recordingLangCode;
     private TextView speechTextView;
     private String finalResult;
@@ -37,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setSupportActionBar((Toolbar)findViewById(R.id.main_toolbar));
+//        setSupportActionBar((Toolbar)findViewById(R.id.main_toolbar));
         speechTextView = findViewById(R.id.speechTextView);
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -46,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 onRecordingButtonClick();
             }
         });
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        new LoadSupportedLanguages(this).execute("test");
     }
 
     private void onRecordingButtonClick() {
@@ -72,9 +85,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         Snackbar.make(findViewById(R.id.mainCoordinatorLayout), "Recording Stopped", Snackbar.LENGTH_SHORT).show();
         isRecording = false;
         fab.setImageResource(R.drawable.ic_mic_black_24dp);
+        //new VoiceRecognitionActivity.SaveCurrentRecording().execute(speechTextView.getText().toString(), recordingLangCode, recordingLangName);
     }
 
     private void InitializeSpeechSettings() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         Log.d(LOG_TAG_DEBUG, "Method: InitializeSpeechSettings");
 //        totalSpeechTime = 0;
 //        timerInSeconds = 0;
@@ -110,6 +125,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private void stopListening() {
         if (speech != null) {
             speech.stopListening();
+            speech.cancel();
+            speech.destroy();
+            speech = null;
         }
 
     }
@@ -147,20 +165,17 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onError(int error) {
-        Log.d(LOG_TAG_DEBUG, "Method:onError"+getErrorText(error));
-        if(error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT){
+        Log.d(LOG_TAG_DEBUG, "Method:onError:" + getErrorText(error));
+        if (error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT || error == SpeechRecognizer.ERROR_NO_MATCH) {
             startListening();
-        }else if(error == SpeechRecognizer.ERROR_CLIENT || error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY){
-            if(speech != null) {
-                speech.cancel();
-                speech.destroy();
-                speech = null;
-            }
-        }
-        else{
-            Snackbar.make(findViewById(R.id.mainCoordinatorLayout), "Error:" + getErrorText(error), Snackbar.LENGTH_SHORT).show();
+        } else {//if(error == SpeechRecognizer.ERROR_CLIENT || error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY){
+            Toast.makeText(this, "Error: " + getErrorText(error), Toast.LENGTH_SHORT).show();
             onStopButtonClick();
         }
+//        else{
+//            Snackbar.make(findViewById(R.id.mainCoordinatorLayout), "Error:" + getErrorText(error), Snackbar.LENGTH_SHORT).show();
+//            onStopButtonClick();
+//        }
     }
 
     @Override
@@ -282,6 +297,88 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             speech.cancel();
             speech.destroy();
             speech = null;
+        }
+    }
+
+    static class LoadSupportedLanguages extends AsyncTask<String, Integer, String> {
+
+        private TextToSpeech textToSpeech1;
+        WeakReference<MainActivity> activityRef;
+
+        public LoadSupportedLanguages(MainActivity activity) {
+            this.activityRef = new WeakReference<MainActivity>(activity);
+        }
+
+        //Log.d(LOG_TAG_DEBUG,"LoadSupportedLanguages");
+        protected String doInBackground(String... test) {
+            Log.d(LOG_TAG_DEBUG, "Method: doInBackground");
+            try {
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activityRef.get());
+                if (!preferences.contains("langNames") || !preferences.contains("langCodes")) {
+                    final List<String> langCodes = new LinkedList<String>();
+                    final List<String> langNames = new LinkedList<String>();
+                    textToSpeech1 = new TextToSpeech(activityRef.get(), new TextToSpeech.OnInitListener() {
+                        @Override
+                        public void onInit(int status) {
+                            Log.d(LOG_TAG_DEBUG, "Method: ASYNC onInit");
+                            if (status == TextToSpeech.SUCCESS) {
+                                Set<Locale> languages = textToSpeech1.getAvailableLanguages();
+                                String speakingLang = "";
+                                List<Locale> sortedLanguages = new ArrayList<Locale>(languages);
+                                Collections.sort(sortedLanguages, new Comparator<Locale>() {
+                                    @Override
+                                    public int compare(Locale o1, Locale o2) {
+                                        return o1.getDisplayName().compareTo(o2.getDisplayName());
+                                    }
+                                });
+
+                                for (Locale lang : sortedLanguages) {
+//                                    Log.d(LOG_TAG_DEBUG, lang.toString());
+                                    langCodes.add(lang.toLanguageTag());
+                                    langNames.add(lang.getDisplayName());
+                                }
+                                SharedPreferences sharedPreferences = activityRef.get().getPreferences(MODE_PRIVATE);
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putString("langNames", TextUtils.join(",", langNames));
+                                editor.putString("langCodes", TextUtils.join(",", langCodes));
+                                editor.apply();
+                            }
+                        }
+                    });
+                    return "Loaded supported Languages";
+                } else {
+                    return "Supported Languages already loaded";
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return e.getMessage();
+            }
+        }
+
+        static class SaveCurrentRecording extends AsyncTask<String, Integer, String> {
+
+            @Override
+            protected String doInBackground(String... strings) {
+                try {
+                    Log.d(LOG_TAG_DEBUG, "Method: saveCurrentRecording");
+                    String recordingText = strings[0];
+                    String LangCode = strings[1];
+                    String LangName = strings[2];
+                    if (!recordingText.isEmpty()) {
+                        Conversation conversation = new Conversation(recordingText, LangCode, LangName);
+                        DatabaseReference conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
+                        conversationDB.child(DEVICE_ID);
+                        conversationDB.child(DEVICE_ID).child(conversation.ID).setValue(conversation);
+                        Log.d(LOG_TAG_DEBUG, "Saved in database");
+                    } else {
+                        Log.d(LOG_TAG_DEBUG, "Recording Text is empty.");
+                    }
+                } catch (Exception e) {
+                    Log.e(LOG_TAG_DEBUG, e.getMessage());
+                    e.printStackTrace();
+                }
+                return "Completed saving recording in Database";
+            }
         }
     }
 }

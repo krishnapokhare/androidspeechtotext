@@ -139,7 +139,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             ListPreference listPreferenceCategory = (ListPreference) findPreference("speakinglanguages");
             if (listPreferenceCategory != null) {
                 Log.i("SETTINGSACTIVITY", "Speaking Languages present");
-                SharedPreferences sharedPreferences = getActivity().getPreferences(MODE_PRIVATE);
+                SharedPreferences sharedPreferences = getActivity().getApplicationContext().getSharedPreferences("SPEECH_RECOGNIZER", MODE_PRIVATE);
                 String langNamesArray = sharedPreferences.getString("langNames", null);
                 String langValuesArray = sharedPreferences.getString("langCodes", null);
                 String myEntries[] = new String[]{"English(United States)"};

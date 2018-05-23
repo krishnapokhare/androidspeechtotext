@@ -34,11 +34,26 @@
         android:paddingTop="@dimen/activity_vertical_margin"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+
         <TextView
             android:id="@+id/speechTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="@dimen/text_size"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/recordingLanguageHeading"
+            android:id="@+id/speakingLanguageHeading"
+            android:text="@string/speakingLanguageHeading" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/recordingLanguageText"
+            android:layout_alignParentBottom="true"
+            android:id="@+id/recordingLanguageHeading" />
 
     </RelativeLayout>
 

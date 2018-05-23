@@ -302,4 +302,6 @@
     <string name="action_callrecording">Call Recording</string>
     <string name="loading">Loading...</string>
     <string name="action_logout">Logout</string>
+    <string name="recordingLanguageText">Recording Language:</string>
+    <string name="speakingLanguageHeading">Speaking Language:</string>
 </resources>

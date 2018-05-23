@@ -22,8 +22,11 @@ import android.widget.Toast;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.w3c.dom.Text;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -45,6 +48,11 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     private TextView speechTextView;
     private String finalResult;
     private boolean stopRecording;
+    private String recordingLangName = "English-United States";
+    String[] languages;
+    String[] languageValues;
+    private TextView recordingLangHeadingTextView;
+    private TextView speakingLangHeadingTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +60,8 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         setContentView(R.layout.activity_main);
 //        setSupportActionBar((Toolbar)findViewById(R.id.main_toolbar));
         speechTextView = findViewById(R.id.speechTextView);
+        recordingLangHeadingTextView = findViewById(R.id.recordingLanguageHeading);
+        speakingLangHeadingTextView = findViewById(R.id.speakingLanguageHeading);
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -59,6 +69,14 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
                 onRecordingButtonClick();
             }
         });
+
+
+        languages = getResources().getStringArray(R.array.languages);
+        languageValues = getResources().getStringArray(R.array.languages_values);
+        Log.d(LOG_TAG_DEBUG, "onCreate: languages" + languages.length);
+        Log.d(LOG_TAG_DEBUG, "onCreate: languageValues" + languageValues.length);
+
+        PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
         new LoadSupportedLanguages(this).execute("test");
     }
 
@@ -73,19 +91,19 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     private void onStartButtonClick() {
         fab.setImageResource(R.drawable.ic_pause_black_24dp);
         isRecording = true;
-        stopRecording=false;
+        stopRecording = false;
         InitializeSpeechSettings();
         startListening();
         Snackbar.make(findViewById(R.id.mainCoordinatorLayout), "Recording in progress", Snackbar.LENGTH_INDEFINITE).show();
     }
 
-    private void onStopButtonClick(){
-        stopRecording=true;
+    private void onStopButtonClick() {
+        stopRecording = true;
         stopListening();
         Snackbar.make(findViewById(R.id.mainCoordinatorLayout), "Recording Stopped", Snackbar.LENGTH_SHORT).show();
         isRecording = false;
         fab.setImageResource(R.drawable.ic_mic_black_24dp);
-        //new VoiceRecognitionActivity.SaveCurrentRecording().execute(speechTextView.getText().toString(), recordingLangCode, recordingLangName);
+        new SaveCurrentRecording().execute(speechTextView.getText().toString(), recordingLangCode, recordingLangName);
     }
 
     private void InitializeSpeechSettings() {
@@ -98,15 +116,10 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         speech.setRecognitionListener(this);
         recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, SILENCE_LENGTH);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, SILENCE_LENGTH);
-
-        recordingLangCode = preferences.getString("languages", "en-US");
-
-        Log.d(LOG_TAG_DEBUG, "Language" + recordingLangCode);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, recordingLangCode);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, recordingLangCode);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, recordingLangCode);
@@ -129,7 +142,6 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
             speech.destroy();
             speech = null;
         }
-
     }
 
     private void startListening() {
@@ -266,7 +278,6 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     }
 
     private class ProcessResult extends AsyncTask<String, Integer, String> {
-
         @Override
         protected String doInBackground(String... strings) {
             String finalResultParam = strings[0];
@@ -285,7 +296,6 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
                     speechTextView.setText(returnedValue);
                 }
             });
-
         }
     }
 
@@ -298,6 +308,22 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
             speech.destroy();
             speech = null;
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        recordingLangCode = preferences.getString("languages", "en-US");
+        recordingLangName = getRecordingLangName(recordingLangCode);
+        recordingLangHeadingTextView.setText(getString(R.string.recordingLanguageText) + " " + recordingLangName);
+    }
+
+    private String getRecordingLangName(String langCode) {
+        Log.d(LOG_TAG_DEBUG, "Method: getRecordingLangName:" + langCode);
+        Log.d(LOG_TAG_DEBUG, languageValues.toString());
+        int langValueIndex = Arrays.asList(languageValues).indexOf(langCode);
+        return languages[langValueIndex];
     }
 
     static class LoadSupportedLanguages extends AsyncTask<String, Integer, String> {
@@ -325,6 +351,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
                                 Set<Locale> languages = textToSpeech1.getAvailableLanguages();
                                 String speakingLang = "";
                                 List<Locale> sortedLanguages = new ArrayList<Locale>(languages);
+                                Log.i(LOG_TAG_DEBUG, String.valueOf(sortedLanguages.size()));
                                 Collections.sort(sortedLanguages, new Comparator<Locale>() {
                                     @Override
                                     public int compare(Locale o1, Locale o2) {
@@ -337,8 +364,10 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
                                     langCodes.add(lang.toLanguageTag());
                                     langNames.add(lang.getDisplayName());
                                 }
-                                SharedPreferences sharedPreferences = activityRef.get().getPreferences(MODE_PRIVATE);
+                                SharedPreferences sharedPreferences = activityRef.get().getApplicationContext().getSharedPreferences("SPEECH_RECOGNIZER", MODE_PRIVATE);
                                 SharedPreferences.Editor editor = sharedPreferences.edit();
+                                Log.i(LOG_TAG_DEBUG, String.valueOf(langNames.size()));
+                                Log.i(LOG_TAG_DEBUG, String.valueOf(langCodes.size()));
                                 editor.putString("langNames", TextUtils.join(",", langNames));
                                 editor.putString("langCodes", TextUtils.join(",", langCodes));
                                 editor.apply();
@@ -355,30 +384,36 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
             }
         }
 
-        static class SaveCurrentRecording extends AsyncTask<String, Integer, String> {
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            Log.d(LOG_TAG_DEBUG, s);
+        }
+    }
 
-            @Override
-            protected String doInBackground(String... strings) {
-                try {
-                    Log.d(LOG_TAG_DEBUG, "Method: saveCurrentRecording");
-                    String recordingText = strings[0];
-                    String LangCode = strings[1];
-                    String LangName = strings[2];
-                    if (!recordingText.isEmpty()) {
-                        Conversation conversation = new Conversation(recordingText, LangCode, LangName);
-                        DatabaseReference conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
-                        conversationDB.child(DEVICE_ID);
-                        conversationDB.child(DEVICE_ID).child(conversation.ID).setValue(conversation);
-                        Log.d(LOG_TAG_DEBUG, "Saved in database");
-                    } else {
-                        Log.d(LOG_TAG_DEBUG, "Recording Text is empty.");
-                    }
-                } catch (Exception e) {
-                    Log.e(LOG_TAG_DEBUG, e.getMessage());
-                    e.printStackTrace();
+    static class SaveCurrentRecording extends AsyncTask<String, Integer, String> {
+
+        @Override
+        protected String doInBackground(String... strings) {
+            try {
+                Log.d(LOG_TAG_DEBUG, "Method: saveCurrentRecording");
+                String recordingText = strings[0];
+                String LangCode = strings[1];
+                String LangName = strings[2];
+                if (!recordingText.isEmpty()) {
+                    Conversation conversation = new Conversation(recordingText, LangCode, LangName);
+                    DatabaseReference conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
+                    conversationDB.child(DEVICE_ID);
+                    conversationDB.child(DEVICE_ID).child(conversation.ID).setValue(conversation);
+                    Log.d(LOG_TAG_DEBUG, "Saved in database");
+                } else {
+                    Log.d(LOG_TAG_DEBUG, "Recording Text is empty.");
                 }
-                return "Completed saving recording in Database";
+            } catch (Exception e) {
+                Log.e(LOG_TAG_DEBUG, e.getMessage());
+                e.printStackTrace();
             }
+            return "Completed saving recording in Database";
         }
     }
 }

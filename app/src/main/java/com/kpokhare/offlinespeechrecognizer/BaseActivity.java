@@ -30,7 +30,8 @@ public class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 //        setContentView(R.layout.activity_base);
         mAuth=FirebaseAuth.getInstance();
-        DEVICE_ID = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+        Global global = (Global) getApplication();
+        global.setDeviceID(Objects.requireNonNull(mAuth.getCurrentUser()).getUid());
     }
 
     @Override

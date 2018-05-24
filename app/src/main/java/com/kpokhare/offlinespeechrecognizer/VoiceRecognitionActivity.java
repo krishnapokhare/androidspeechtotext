@@ -83,7 +83,7 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
     private String[] languageValues;
     private boolean readyToSpeak = false;
     private static DatabaseReference conversationDB;
-    private String recordingLangCode, recordingLangName;
+    private String recordingLangCode, recordingLangName, speakingLangName;
 //    static String DEVICE_ID = "";
 
 

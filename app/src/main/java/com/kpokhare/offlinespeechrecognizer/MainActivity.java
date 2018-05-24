@@ -317,6 +317,9 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         recordingLangCode = preferences.getString("languages", "en-US");
         recordingLangName = getRecordingLangName(recordingLangCode);
         recordingLangHeadingTextView.setText(getString(R.string.recordingLanguageText) + " " + recordingLangName);
+        String speakingLanguage = preferences.getString("speakinglanguages", "en-US");
+        String speakingLanguageName = Locale.forLanguageTag(speakingLanguage).getDisplayName();
+        speakingLangHeadingTextView.setText(getString(R.string.speakingLanguageHeading) + " " + speakingLanguageName);
     }
 
     private String getRecordingLangName(String langCode) {

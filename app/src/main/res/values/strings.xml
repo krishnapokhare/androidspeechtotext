@@ -304,4 +304,5 @@
     <string name="action_logout">Logout</string>
     <string name="recordingLanguageText">Recording Language:</string>
     <string name="speakingLanguageHeading">Speaking Language:</string>
+    <string name="playRecording">Play Recording</string>
 </resources>

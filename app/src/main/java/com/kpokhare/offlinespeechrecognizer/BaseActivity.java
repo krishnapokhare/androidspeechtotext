@@ -30,8 +30,9 @@ public class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 //        setContentView(R.layout.activity_base);
         mAuth=FirebaseAuth.getInstance();
-        Global global = (Global) getApplication();
-        global.setDeviceID(Objects.requireNonNull(mAuth.getCurrentUser()).getUid());
+        if (DEVICE_ID == null || DEVICE_ID == "") {
+            DEVICE_ID = mAuth.getCurrentUser().getUid();
+        }
     }
 
     @Override
@@ -108,12 +109,6 @@ public class BaseActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 mDrawerLayout.openDrawer(GravityCompat.START);
-                return true;
-//            case R.id.action_callrecording:
-//                startActivity(new Intent(getApplicationContext(), CallRecordingActivity.class));
-//                return true;
-            case R.id.action_home:
-                startActivity(new Intent(getApplicationContext(), MainActivity.class));
                 return true;
             case R.id.action_settings:
                 startActivity(new Intent(getApplicationContext(), SettingsActivity.class));

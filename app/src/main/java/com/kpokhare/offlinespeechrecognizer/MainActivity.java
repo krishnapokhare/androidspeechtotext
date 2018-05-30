@@ -2,7 +2,13 @@ package com.kpokhare.offlinespeechrecognizer;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioRecord;
+import android.media.AudioTrack;
+import android.media.MediaRecorder;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -15,6 +21,10 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.ActionMode;
+import android.view.ContextMenu;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +34,14 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import org.w3c.dom.Text;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,13 +50,16 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 import static com.kpokhare.offlinespeechrecognizer.BaseActivity.LOG_TAG_DEBUG;
 
 public class MainActivity extends BaseActivity implements RecognitionListener {
     private static final String MINIMUM_SPEECH_INTERVAL = "15";
     private static final String SILENCE_LENGTH = "5";
+    private static final int MENU_PLAY = 1000;
     boolean isRecording = false;
     FloatingActionButton fab;
     private SpeechRecognizer speech;
@@ -53,6 +74,11 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     String[] languageValues;
     private TextView recordingLangHeadingTextView;
     private TextView speakingLangHeadingTextView;
+    private TextToSpeech textToSpeech;
+    private boolean readyToSpeak;
+//    private File recordingFile;
+//    private boolean isPlaying;
+//    private MediaRecorder myAudioRecorder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,11 +99,22 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
 
         languages = getResources().getStringArray(R.array.languages);
         languageValues = getResources().getStringArray(R.array.languages_values);
-        Log.d(LOG_TAG_DEBUG, "onCreate: languages" + languages.length);
-        Log.d(LOG_TAG_DEBUG, "onCreate: languageValues" + languageValues.length);
+//        Log.d(LOG_TAG_DEBUG, "onCreate: languages" + languages.length);
+//        Log.d(LOG_TAG_DEBUG, "onCreate: languageValues" + languageValues.length);
 
         PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
         new LoadSupportedLanguages(this).execute("test");
+//
+//        File path = new File(
+//                Environment.getExternalStorageDirectory().getAbsolutePath()
+//                        + "/Android/data/com.kpokhare.offlinespeechrecognizer/files/");
+//        Log.i(LOG_TAG_DEBUG,path.getAbsolutePath());
+//        path.mkdirs();
+//        try {
+//            recordingFile = File.createTempFile("recording", ".3gp", path);
+//        } catch (IOException e) {
+//            throw new RuntimeException("Couldn't create file on SD card", e);
+//        }
     }
 
     private void onRecordingButtonClick() {
@@ -93,8 +130,10 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         isRecording = true;
         stopRecording = false;
         InitializeSpeechSettings();
+        //InitializeRecording();
         startListening();
         Snackbar.make(findViewById(R.id.mainCoordinatorLayout), "Recording in progress", Snackbar.LENGTH_INDEFINITE).show();
+//        new RecordAudio().execute();
     }
 
     private void onStopButtonClick() {
@@ -104,6 +143,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         isRecording = false;
         fab.setImageResource(R.drawable.ic_mic_black_24dp);
         new SaveCurrentRecording().execute(speechTextView.getText().toString(), recordingLangCode, recordingLangName);
+
     }
 
     private void InitializeSpeechSettings() {
@@ -142,11 +182,13 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
             speech.destroy();
             speech = null;
         }
+        //StopRecording();
     }
 
     private void startListening() {
         if (speech != null && !stopRecording) { //Checking if Stop Recording button is clicked in UI
             speech.startListening(recognizerIntent);
+            //new RecordAudio().execute();
         }
     }
 
@@ -320,6 +362,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         String speakingLanguage = preferences.getString("speakinglanguages", "en-US");
         String speakingLanguageName = Locale.forLanguageTag(speakingLanguage).getDisplayName();
         speakingLangHeadingTextView.setText(getString(R.string.speakingLanguageHeading) + " " + speakingLanguageName);
+        new PrepareTextToSpeechTask(this).execute();
     }
 
     private String getRecordingLangName(String langCode) {
@@ -327,6 +370,27 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         Log.d(LOG_TAG_DEBUG, languageValues.toString());
         int langValueIndex = Arrays.asList(languageValues).indexOf(langCode);
         return languages[langValueIndex];
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem menuPlay = menu.findItem(MENU_PLAY);
+        if (menuPlay == null) {
+            menuPlay = menu.add(Menu.NONE, MENU_PLAY, 111, R.string.playRecording);
+            menuPlay.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            menuPlay.setIcon(R.drawable.ic_play_sound);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        boolean returnValue = super.onOptionsItemSelected(item);
+        if (item.getItemId() == MENU_PLAY) {
+//            new PlayAudio().execute();
+            PlayTextToSpeech(speechTextView.getText().toString());
+        }
+        return returnValue;
     }
 
     static class LoadSupportedLanguages extends AsyncTask<String, Integer, String> {
@@ -419,4 +483,190 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
             return "Completed saving recording in Database";
         }
     }
+
+    private class PrepareTextToSpeechTask extends AsyncTask<Void, Integer, Void> {
+
+        WeakReference<MainActivity> activityRef;
+
+        public PrepareTextToSpeechTask(MainActivity activity) {
+            this.activityRef = new WeakReference<MainActivity>(activity);
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            textToSpeech = new TextToSpeech(activityRef.get(), new TextToSpeech.OnInitListener() {
+                @Override
+                public void onInit(int status) {
+                    switch (status) {
+                        case TextToSpeech.SUCCESS:
+                            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activityRef.get());
+                            String speechLang = preferences.getString("speakinglanguages", "en-US");
+                            Log.d(LOG_TAG_DEBUG, "Speech Language: " + speechLang);
+                            int result = textToSpeech.setLanguage(Locale.forLanguageTag(speechLang));
+                            if (result == TextToSpeech.LANG_MISSING_DATA
+                                    || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+//                                Toast.makeText(getApplicationContext(), "This language is not supported", Toast.LENGTH_SHORT).show();
+                                Log.w(LOG_TAG_DEBUG, "This language is not supported");
+                            } else {
+                                readyToSpeak = true;
+                            }
+                            break;
+                        case TextToSpeech.ERROR:
+                            Log.w(LOG_TAG_DEBUG, "TTS Error:" + status);
+//                            Toast.makeText(getApplicationContext(), "TTS Initialization failed", Toast.LENGTH_SHORT).show();
+                            readyToSpeak = false;
+                            break;
+                        default:
+                            Log.w(LOG_TAG_DEBUG, "Status of text to speech:" + status);
+                            break;
+                    }
+                }
+            });
+            return null;
+        }
+    }
+
+    private void PlayTextToSpeech(String returnedText) {
+        if (isRecording) {
+            Toast.makeText(getApplicationContext(), "Recording in Progress. Please click on Stop Recording before clicking on Listen button", Toast.LENGTH_SHORT).show();
+        }
+        if (readyToSpeak && !Objects.equals(returnedText, "")) {
+            Log.d(LOG_TAG_DEBUG, "Ready to speak");
+            String toSpeak = returnedText;
+            Toast.makeText(getApplicationContext(), toSpeak, Toast.LENGTH_SHORT).show();
+            Bundle bundle = new Bundle();
+            bundle.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC);
+            try {
+                textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, bundle, UUID.randomUUID().toString());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        } else {
+            Toast.makeText(getApplicationContext(), "No text present for speech.", Toast.LENGTH_SHORT).show();
+            Log.w(LOG_TAG_DEBUG, "No text present for speech");
+        }
+    }
+//
+//    int frequency = 11025,channelConfiguration = AudioFormat.CHANNEL_IN_MONO;
+//    int audioEncoding = AudioFormat.ENCODING_PCM_16BIT;
+//
+//    private class RecordAudio1 extends AsyncTask<Void, Integer, Void> {
+//        @Override
+//        protected Void doInBackground(Void... params) {
+//            isRecording = true;
+//            try {
+//                DataOutputStream dos = new DataOutputStream(
+//                        new BufferedOutputStream(new FileOutputStream(
+//                                recordingFile)));
+//                int bufferSize = AudioRecord.getMinBufferSize(frequency,
+//                        channelConfiguration, audioEncoding);
+//                AudioRecord audioRecord = new AudioRecord(
+//                        MediaRecorder.AudioSource.MIC, frequency,
+//                        channelConfiguration, audioEncoding, bufferSize);
+//
+//                short[] buffer = new short[bufferSize];
+//                audioRecord.startRecording();
+//                int r = 0;
+//                while (isRecording) {
+//                    int bufferReadResult = audioRecord.read(buffer, 0,
+//                            bufferSize);
+//                    for (int i = 0; i < bufferReadResult; i++) {
+//                        dos.writeShort(buffer[i]);
+//                    }
+//                    publishProgress(new Integer(r));
+//                    r++;
+//                }
+//                audioRecord.stop();
+//                dos.close();
+//            } catch (Throwable t) {
+//                Log.e("AudioRecord", "Recording Failed");
+//            }
+//            return null;
+//        }
+//        protected void onProgressUpdate(Integer... progress) {
+//            //statusText.setText(progress[0].toString());
+//        }
+//        protected void onPostExecute(Void result) {
+//            //startRecordingButton.setEnabled(true);
+//            //stopRecordingButton.setEnabled(false);
+//            //startPlaybackButton.setEnabled(true);
+//            Toast.makeText(MainActivity.this, "Recording completed", Toast.LENGTH_SHORT).show();
+//        }
+//    }
+//
+//    private void InitializeRecording(){
+//        myAudioRecorder = new MediaRecorder();
+//        myAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+//        myAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+//        myAudioRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
+//        myAudioRecorder.setOutputFile(recordingFile);
+//    }
+//
+//    private void StopRecording(){
+//        if(myAudioRecorder != null) {
+//            myAudioRecorder.stop();
+//            myAudioRecorder.release();
+//            myAudioRecorder = null;
+//        }
+//    }
+//
+//    private class RecordAudio extends AsyncTask<Void, Integer, Void> {
+//        @Override
+//        protected Void doInBackground(Void... params) {
+//            isRecording = true;
+//            try {
+//                myAudioRecorder.prepare();
+//                myAudioRecorder.start();
+//            } catch (IllegalStateException ise) {
+//                ise.printStackTrace();
+//            } catch (IOException ioe) {
+//                ioe.printStackTrace();
+//            }
+//            return null;
+//        }
+//        protected void onProgressUpdate(Integer... progress) {
+//            //statusText.setText(progress[0].toString());
+//        }
+//        protected void onPostExecute(Void result) {
+//            //startRecordingButton.setEnabled(true);
+//            //stopRecordingButton.setEnabled(false);
+//            //startPlaybackButton.setEnabled(true);
+//            Toast.makeText(MainActivity.this, "Recording completed", Toast.LENGTH_SHORT).show();
+//        }
+//    }
+//
+//    private class PlayAudio extends AsyncTask<Void, Integer, Void> {
+//        @Override
+//        protected Void doInBackground(Void... params) {
+//            isPlaying = true;
+//
+//            int bufferSize = AudioTrack.getMinBufferSize(frequency,channelConfiguration, audioEncoding);
+//            short[] audiodata = new short[bufferSize / 4];
+//
+//            try {
+//                Log.i(LOG_TAG_DEBUG,recordingFile.getAbsolutePath());
+//                DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(recordingFile)));
+//                AudioTrack audioTrack = new AudioTrack(
+//                        AudioManager.STREAM_MUSIC, frequency,
+//                        channelConfiguration, audioEncoding, bufferSize,
+//                        AudioTrack.MODE_STREAM);
+//
+//                audioTrack.play();
+//                while (isPlaying && dis.available() > 0) {
+//                    int i = 0;
+//                    while (dis.available() > 0 && i < audiodata.length) {
+//                        audiodata[i] = dis.readShort();
+//                        i++;
+//                    }
+//                    audioTrack.write(audiodata, 0, audiodata.length);
+//                }
+//                dis.close();
+////                startPlaybackButton.setEnabled(false);
+////                stopPlaybackButton.setEnabled(true);
+//            } catch (Throwable t) {
+//                Log.e("AudioTrack", "Playback Failed");
+//            }
+//            return null;
+//        }
+//    }
 }

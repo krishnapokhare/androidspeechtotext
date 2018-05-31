@@ -45,9 +45,16 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_above="@id/speakingLanguageHeading"
+            android:layout_above="@id/keywordTextView"
             android:id="@+id/recordingStatus"
             android:text="@string/average_word_count_text" />
+
+        <TextView
+            android:id="@+id/keywordTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/speakingLanguageHeading"
+            android:text="@string/keyword_count_text" />
 
         <TextView
             android:layout_width="match_parent"

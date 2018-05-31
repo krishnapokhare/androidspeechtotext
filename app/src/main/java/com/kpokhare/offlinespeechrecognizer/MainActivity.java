@@ -2,13 +2,8 @@ package com.kpokhare.offlinespeechrecognizer;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioRecord;
-import android.media.AudioTrack;
-import android.media.MediaRecorder;
 import android.os.AsyncTask;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -16,13 +11,10 @@ import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.ActionMode;
-import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,16 +24,6 @@ import android.widget.Toast;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import org.w3c.dom.Text;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,8 +35,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-
-import static com.kpokhare.offlinespeechrecognizer.BaseActivity.LOG_TAG_DEBUG;
 
 public class MainActivity extends BaseActivity implements RecognitionListener {
     private static final String MINIMUM_SPEECH_INTERVAL = "15";
@@ -76,6 +56,9 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     private TextView speakingLangHeadingTextView;
     private TextToSpeech textToSpeech;
     private boolean readyToSpeak;
+    //    private ActionMode.Callback mActionModeCallback;
+//    private Object mActionMode;
+    private String keyword;
 //    private File recordingFile;
 //    private boolean isPlaying;
 //    private MediaRecorder myAudioRecorder;
@@ -115,6 +98,106 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
 //        } catch (IOException e) {
 //            throw new RuntimeException("Couldn't create file on SD card", e);
 //        }
+
+//        mActionModeCallback = new ActionMode.Callback() {
+//
+//            // Called when the action mode is created; startActionMode() was called
+//            @Override
+//            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+//                // Inflate a menu resource providing context menu items
+//                MenuInflater inflater = mode.getMenuInflater();
+//                inflater.inflate(R.menu.context_menu, menu);
+//                return true;
+//            }
+//
+//            // Called each time the action mode is shown. Always called after onCreateActionMode, but
+//            // may be called multiple times if the mode is invalidated.
+//            @Override
+//            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+//                return false; // Return false if nothing is done
+//            }
+//
+//            // Called when the user selects a contextual menu item
+//            @Override
+//            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+//                switch (item.getItemId()) {
+//                    case R.id.action_play:
+//                        Log.i(LOG_TAG_DEBUG,"Play clicked");
+//                        mode.finish(); // Action picked, so close the CAB
+//                        return true;
+//                    default:
+//                        return false;
+//                }
+//            }
+//
+//            // Called when the user exits the action mode
+//            @Override
+//            public void onDestroyActionMode(ActionMode mode) {
+//                mActionMode = null;
+//            }
+//        };
+//
+//        speechTextView.setOnLongClickListener(new View.OnLongClickListener() {
+//            // Called when the user long-clicks on someView
+//            public boolean onLongClick(View view) {
+//                Log.d(LOG_TAG_DEBUG,"Textview Long Clicked");
+//                if (mActionMode != null) {
+//                    return false;
+//                }
+//
+//                // Start the CAB using the ActionMode.Callback defined above
+//                mActionMode = view.startActionMode(mActionModeCallback);
+//                view.setSelected(true);
+//                return true;
+//            }
+//        });
+
+        speechTextView.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
+            @Override
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                menu.add(Menu.NONE, MENU_PLAY, 1, "Pronounce word").setIcon(R.drawable.ic_play_sound);
+                return true;
+            }
+
+            @Override
+            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                // Remove the "select all" option
+                menu.removeItem(android.R.id.selectAll);
+                // Remove the "cut" option
+                menu.removeItem(android.R.id.cut);
+                // Remove the "copy all" option
+                menu.removeItem(android.R.id.copy);
+                return true;
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                if (item.getItemId() == MENU_PLAY) {
+                    int min = 0;
+                    int max = speechTextView.getText().length();
+                    if (speechTextView.isFocused()) {
+                        final int selStart = speechTextView.getSelectionStart();
+                        final int selEnd = speechTextView.getSelectionEnd();
+
+                        min = Math.max(0, Math.min(selStart, selEnd));
+                        max = Math.max(0, Math.max(selStart, selEnd));
+                    }
+                    // Perform your definition lookup with the selected text
+                    final CharSequence selectedText = speechTextView.getText().subSequence(min, max);
+                    PlayTextToSpeech(selectedText.toString());
+                    Log.d(LOG_TAG_DEBUG, "selected text is " + selectedText);
+                    // Finish and close the ActionMode
+                    mode.finish();
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode mode) {
+
+            }
+        });
     }
 
     private void onRecordingButtonClick() {
@@ -171,6 +254,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
 //        returnedText.setText("");
 //        wordCountTextView.setText(getString(R.string.average_word_count_text));
 //        keywordTextView.setText(getString(R.string.keyword_count_text));
+        keyword = preferences.getString("keyword", null);
         finalResult = "";
         speechTextView.setText(finalResult);
     }
@@ -195,6 +279,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     @Override
     public void onReadyForSpeech(Bundle params) {
         Log.d(LOG_TAG_DEBUG, "Method:onReadyForSpeech");
+        Toast.makeText(this, "You can speak now", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -238,7 +323,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         if (matches != null && matches.size() > 0) {
-            new ProcessResult().execute(matches.get(0));
+            new ProcessResultTask().execute(matches.get(0));
             startListening();
         }
     }
@@ -248,7 +333,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         Log.d(LOG_TAG_DEBUG, "Method:onPartialResults");
         ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         if (matches != null && matches.size() > 0) {
-            new ProcessPartialResult().execute(matches.get(0));
+            new ProcessPartialResultTask().execute(matches.get(0));
         }
     }
 
@@ -295,7 +380,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         return message;
     }
 
-    private class ProcessPartialResult extends AsyncTask<String, Integer, String> {
+    private class ProcessPartialResultTask extends AsyncTask<String, Integer, String> {
 
         @Override
         protected String doInBackground(String... strings) {
@@ -319,7 +404,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         }
     }
 
-    private class ProcessResult extends AsyncTask<String, Integer, String> {
+    private class ProcessResultTask extends AsyncTask<String, Integer, String> {
         @Override
         protected String doInBackground(String... strings) {
             String finalResultParam = strings[0];
@@ -338,8 +423,53 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
                     speechTextView.setText(returnedValue);
                 }
             });
+            new CalculateKeywordCountTask().execute(result);
         }
     }
+
+    private class CalculateKeywordCountTask extends AsyncTask<String, Integer, String> {
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String recordingText = strings[0];
+            Log.d(LOG_TAG_DEBUG, "Method: CalculateKeywordCount");
+            Log.d(LOG_TAG_DEBUG, "keyword: " + keyword);
+            Log.d(LOG_TAG_DEBUG, "Final Result: " + recordingText);
+            if (keyword != null) {
+                return getString(R.string.keyword_count_text) + Global.CountOfSubstringInString(recordingText, keyword);
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            if (result != null) {
+                TextView keywordTextView = findViewById(R.id.keywordTextView);
+                keywordTextView.setText(result);
+            }
+        }
+    }
+
+//    private void CalculateKeywordCount(String recordingText) {
+//        Log.d(LOG_TAG_DEBUG, "Method: CalculateKeywordCount");
+//        Log.d(LOG_TAG_DEBUG, "keyword: " + keyword);
+//        Log.d(LOG_TAG_DEBUG, "Final Result: " + recordingText);
+//        if (keyword != null) {
+//            TextView keywordTextView = findViewById(R.id.keywordTextView);
+//            keywordTextView.setText(getString(R.string.keyword_count_text) + Global.CountOfSubstringInString(recordingText, keyword));
+//        }
+//    }
+
+//    private void CalculateAvgWordCount(long timeTaken, String words) {
+//        Log.d(LOG_TAG_DEBUG, "Method: CalculateAvgWordCount");
+//        int wordCount = Global.countWordsUsingSplit(words);
+//        Log.d(LOG_TAG_DEBUG, "Word Count:" + Integer.toString(wordCount));
+//        avgWordCount = wordCount / (timeTaken / WordCountInterval);
+//        Log.d(LOG_TAG_DEBUG, "Avg Word Count:" + Long.toString(avgWordCount));
+//        WordCountIntervalIncrementor = WordCountIntervalIncrementor + WordCountInterval;
+//        wordCountTextView.setText("Status:" + Long.toString(avgWordCount) + " words per " + Integer.toString(WordCountInterval) + " seconds.");
+//    }
 
     @Override
     protected void onStop() {

@@ -7,11 +7,10 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioManager;
-
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -19,13 +18,10 @@ import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-
 import android.widget.Button;
-
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -585,7 +581,7 @@ public class VoiceRecognitionActivity extends BaseActivity implements Recognitio
             this.preferences = preferences;
         }
 
-        //Log.d(LOG_TAG_DEBUG,"LoadSupportedLanguages");
+        //Log.d(LOG_TAG_DEBUG,"LoadSupportedLanguagesTask");
         protected String doInBackground(String... test) {
             Log.d(LOG_TAG_DEBUG, "Method: doInBackground");
             try {

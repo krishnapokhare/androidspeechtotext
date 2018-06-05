@@ -225,7 +225,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     }
 
     private void onStartButtonClick() {
-        fab.setImageResource(R.drawable.ic_pause_black_24dp);
+        fab.setImageResource(R.drawable.ic_stop_black_24dp);
         isRecording = true;
         stopRecording = false;
         InitializeSpeechSettings();
@@ -292,7 +292,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     public void onReadyForSpeech(Bundle params) {
         Log.d(LOG_TAG_DEBUG, "Method:onReadyForSpeech");
         if (startSpeechMessageCount == 0) {
-            Toast.makeText(this, "Listeningn now...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Listening now...", Toast.LENGTH_SHORT).show();
             startSpeechMessageCount++;
         }
     }

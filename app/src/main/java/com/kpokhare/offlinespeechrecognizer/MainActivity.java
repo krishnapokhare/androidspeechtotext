@@ -76,6 +76,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     private TextView errorTextView;
     private int startSpeechMessageCount;
     private TextView keywordValueTextView;
+    private TextView keywordTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +89,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         avgWordCountTextView = findViewById(R.id.avgWordCountTextView);
         keywordValueTextView = findViewById(R.id.keywordValueTextView);
         errorTextView = findViewById(R.id.errorTextView);
+        keywordTextView = findViewById(R.id.keywordTextView);
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,8 +102,8 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         languageValues = getResources().getStringArray(R.array.languages_values);
 
         PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
-        new LoadSupportedLanguagesTask(this).execute("test");
-
+        LoadSupportedLanguages(this);
+        InitializeRecognizerIntent();
         speechTextView.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
@@ -190,19 +192,15 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         Snackbar.make(findViewById(R.id.mainCoordinatorLayout), "Recording Stopped", Snackbar.LENGTH_SHORT).show();
         isRecording = false;
         fab.setImageResource(R.drawable.ic_mic_black_24dp);
-        new SaveCurrentRecordingTask().execute(speechTextView.getText().toString(), recordingLangCode, recordingLangName);
-
+        SaveCurrentRecording(speechTextView.getText().toString(), recordingLangCode, recordingLangName);
     }
 
     private void InitializeSpeechSettings() {
         Log.d(LOG_TAG_DEBUG, "Method: InitializeSpeechSettings");
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        totalSpeechTime = 0;
         InitializeSpeechRecognizer();
-        WordCountInterval = Integer.parseInt(preferences.getString("word_count_interval", "5"));
         WordCountIntervalIncrementor = WordCountInterval;
-        minimum_words_vibration = Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
         finalResult = "";
+        totalSpeechTime = 0;
         speechTextView.setText(finalResult);
         startSpeechMessageCount = 0;
     }
@@ -210,6 +208,9 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     private void InitializeSpeechRecognizer() {
         speech = SpeechRecognizer.createSpeechRecognizer(this);
         speech.setRecognitionListener(this);
+    }
+
+    private void InitializeRecognizerIntent() {
         recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -284,7 +285,8 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         if (matches != null && matches.size() > 0) {
-            new ProcessResultTask().execute(matches.get(0));
+//            new ProcessResultTask().execute(matches.get(0));
+            ProcessResult(matches.get(0));
             startListening();
         }
     }
@@ -295,7 +297,9 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         if (matches != null && matches.size() > 0) {
             intervalSpeechStopDate = Calendar.getInstance().getTime();
-            new ProcessPartialResultTask().execute(matches.get(0));
+            Log.d(LOG_TAG_DEBUG, "PartialResults:" + matches.get(0));
+//            new ProcessPartialResultTask().execute(matches.get(0));
+            ProcessPartialResult(matches.get(0));
         }
     }
 
@@ -354,32 +358,27 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         speakingLangHeadingTextView.setText(speakingLanguageName);
         keyword = preferences.getString("keyword", "Not set");
         keywordValueTextView.setText(keyword);
+        WordCountInterval = Integer.parseInt(preferences.getString("word_count_interval", "5"));
+        minimum_words_vibration = Integer.parseInt(preferences.getString("minimum_words_vibration", getString(R.string.minimum_words_vibration)));
+        //PrepareTextToSpeech(this);
         new PrepareTextToSpeechTask(this).execute();
     }
 
-    static class LoadSupportedLanguagesTask extends AsyncTask<String, Integer, String> {
-
-        private TextToSpeech textToSpeech1;
-        WeakReference<MainActivity> activityRef;
-
-        public LoadSupportedLanguagesTask(MainActivity activity) {
-            this.activityRef = new WeakReference<MainActivity>(activity);
-        }
-
-        //Log.d(LOG_TAG_DEBUG,"LoadSupportedLanguagesTask");
-        protected String doInBackground(String... test) {
-            Log.d(LOG_TAG_DEBUG, "Method: ASYNC LoadSupportedLanguagesTask");
-            try {
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activityRef.get());
+    private void LoadSupportedLanguages(final Context context) {
+        final TextToSpeech[] textToSpeech1 = new TextToSpeech[1];
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
                 if (!preferences.contains("langNames") || !preferences.contains("langCodes")) {
                     final List<String> langCodes = new LinkedList<String>();
                     final List<String> langNames = new LinkedList<String>();
-                    textToSpeech1 = new TextToSpeech(activityRef.get(), new TextToSpeech.OnInitListener() {
+                    textToSpeech1[0] = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
                         @Override
                         public void onInit(int status) {
                             Log.d(LOG_TAG_DEBUG, "Method: ASYNC onInit");
                             if (status == TextToSpeech.SUCCESS) {
-                                Set<Locale> languages = textToSpeech1.getAvailableLanguages();
+                                Set<Locale> languages = textToSpeech1[0].getAvailableLanguages();
                                 String speakingLang = "";
                                 List<Locale> sortedLanguages = new ArrayList<Locale>(languages);
                                 Log.i(LOG_TAG_DEBUG, String.valueOf(sortedLanguages.size()));
@@ -395,7 +394,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
                                     langCodes.add(lang.toLanguageTag());
                                     langNames.add(lang.getDisplayName());
                                 }
-                                SharedPreferences sharedPreferences = activityRef.get().getApplicationContext().getSharedPreferences("SPEECH_RECOGNIZER", MODE_PRIVATE);
+                                SharedPreferences sharedPreferences = context.getApplicationContext().getSharedPreferences("SPEECH_RECOGNIZER", MODE_PRIVATE);
                                 SharedPreferences.Editor editor = sharedPreferences.edit();
                                 Log.i(LOG_TAG_DEBUG, String.valueOf(langNames.size()));
                                 Log.i(LOG_TAG_DEBUG, String.valueOf(langCodes.size()));
@@ -405,32 +404,81 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
                             }
                         }
                     });
-                    return "Loaded supported Languages";
-                } else {
-                    return "Supported Languages already loaded";
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                return e.getMessage();
             }
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            Log.d(LOG_TAG_DEBUG, s);
-        }
+        };
+        new Thread(runnable).start();
     }
 
-    static class SaveCurrentRecordingTask extends AsyncTask<String, Integer, String> {
+//    static class LoadSupportedLanguagesTask extends AsyncTask<String, Integer, String> {
+//
+//        private TextToSpeech textToSpeech1;
+//        WeakReference<MainActivity> activityRef;
+//
+//        public LoadSupportedLanguagesTask(MainActivity activity) {
+//            this.activityRef = new WeakReference<MainActivity>(activity);
+//        }
+//
+//        //Log.d(LOG_TAG_DEBUG,"LoadSupportedLanguagesTask");
+//        protected String doInBackground(String... test) {
+//            Log.d(LOG_TAG_DEBUG, "Method: ASYNC LoadSupportedLanguagesTask");
+//            try {
+//                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activityRef.get());
+//                if (!preferences.contains("langNames") || !preferences.contains("langCodes")) {
+//                    final List<String> langCodes = new LinkedList<String>();
+//                    final List<String> langNames = new LinkedList<String>();
+//                    textToSpeech1 = new TextToSpeech(activityRef.get(), new TextToSpeech.OnInitListener() {
+//                        @Override
+//                        public void onInit(int status) {
+//                            Log.d(LOG_TAG_DEBUG, "Method: ASYNC onInit");
+//                            if (status == TextToSpeech.SUCCESS) {
+//                                Set<Locale> languages = textToSpeech1.getAvailableLanguages();
+//                                String speakingLang = "";
+//                                List<Locale> sortedLanguages = new ArrayList<Locale>(languages);
+//                                Log.i(LOG_TAG_DEBUG, String.valueOf(sortedLanguages.size()));
+//                                Collections.sort(sortedLanguages, new Comparator<Locale>() {
+//                                    @Override
+//                                    public int compare(Locale o1, Locale o2) {
+//                                        return o1.getDisplayName().compareTo(o2.getDisplayName());
+//                                    }
+//                                });
+//
+//                                for (Locale lang : sortedLanguages) {
+////                                    Log.d(LOG_TAG_DEBUG, lang.toString());
+//                                    langCodes.add(lang.toLanguageTag());
+//                                    langNames.add(lang.getDisplayName());
+//                                }
+//                                SharedPreferences sharedPreferences = activityRef.get().getApplicationContext().getSharedPreferences("SPEECH_RECOGNIZER", MODE_PRIVATE);
+//                                SharedPreferences.Editor editor = sharedPreferences.edit();
+//                                Log.i(LOG_TAG_DEBUG, String.valueOf(langNames.size()));
+//                                Log.i(LOG_TAG_DEBUG, String.valueOf(langCodes.size()));
+//                                editor.putString("langNames", TextUtils.join(",", langNames));
+//                                editor.putString("langCodes", TextUtils.join(",", langCodes));
+//                                editor.apply();
+//                            }
+//                        }
+//                    });
+//                    return "Loaded supported Languages";
+//                } else {
+//                    return "Supported Languages already loaded";
+//                }
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                return e.getMessage();
+//            }
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String s) {
+//            super.onPostExecute(s);
+//            Log.d(LOG_TAG_DEBUG, s);
+//        }
+//    }
 
-        @Override
-        protected String doInBackground(String... strings) {
-            Log.d(LOG_TAG_DEBUG, "Method: ASYNC SaveCurrentRecordingTask");
-            try {
-                String recordingText = strings[0];
-                String LangCode = strings[1];
-                String LangName = strings[2];
+    private void SaveCurrentRecording(final String recordingText, final String LangCode, final String LangName) {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
                 if (!recordingText.isEmpty()) {
                     Conversation conversation = new Conversation(recordingText, LangCode, LangName);
                     DatabaseReference conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
@@ -440,13 +488,68 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
                 } else {
                     Log.d(LOG_TAG_DEBUG, "Recording Text is empty.");
                 }
-            } catch (Exception e) {
-                Log.e(LOG_TAG_DEBUG, e.getMessage());
-                e.printStackTrace();
             }
-            return "Completed saving recording in Database";
-        }
+        };
+        new Thread(runnable).start();
     }
+
+//    static class SaveCurrentRecordingTask extends AsyncTask<String, Integer, String> {
+//
+//        @Override
+//        protected String doInBackground(String... strings) {
+//            Log.d(LOG_TAG_DEBUG, "Method: ASYNC SaveCurrentRecordingTask");
+//            try {
+//                String recordingText = strings[0];
+//                String LangCode = strings[1];
+//                String LangName = strings[2];
+//                if (!recordingText.isEmpty()) {
+//                    Conversation conversation = new Conversation(recordingText, LangCode, LangName);
+//                    DatabaseReference conversationDB = FirebaseDatabase.getInstance().getReference("Conversations");
+//                    conversationDB.child(DEVICE_ID);
+//                    conversationDB.child(DEVICE_ID).child(conversation.ID).setValue(conversation);
+//                    Log.d(LOG_TAG_DEBUG, "Saved in database");
+//                } else {
+//                    Log.d(LOG_TAG_DEBUG, "Recording Text is empty.");
+//                }
+//            } catch (Exception e) {
+//                Log.e(LOG_TAG_DEBUG, e.getMessage());
+//                e.printStackTrace();
+//            }
+//            return "Completed saving recording in Database";
+//        }
+//    }
+
+//    private void CalculateAvgWordCount(final String partialFinalResult) {
+//        Runnable runnable = new Runnable() {
+//            @Override
+//            public void run() {
+//                long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
+//                long temporaryTotalSpeechTime = totalSpeechTime + intervalTime / 1000;
+//                Log.d(LOG_TAG_DEBUG, "Temporary Total Speech Time: " + temporaryTotalSpeechTime);
+//                if (temporaryTotalSpeechTime >= WordCountIntervalIncrementor) {
+////                CalculateAvgWordCount(temporaryTotalSpeechTime, partialFinalResult);
+//                    Log.d(LOG_TAG_DEBUG, "Method: CalculateAvgWordCount");
+//                    int wordCount = Global.countWordsUsingSplit(partialFinalResult);
+//                    Log.d(LOG_TAG_DEBUG, "Word Count:" + Integer.toString(wordCount));
+//                    final long avgWordCount = wordCount / (temporaryTotalSpeechTime / WordCountInterval);
+//                    Log.d(LOG_TAG_DEBUG, "Avg Word Count:" + Long.toString(avgWordCount));
+//                    WordCountIntervalIncrementor = WordCountIntervalIncrementor + WordCountInterval;
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            if (avgWordCount > minimum_words_vibration) {
+//                                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+//                                Objects.requireNonNull(v, "Vibrator service is returning as null.").vibrate(500);
+//                            }
+//                            avgWordCountTextView.setText(Long.toString(avgWordCount) + " words per " + Integer.toString(WordCountInterval) + " seconds.");
+//                        }
+//                    });
+//
+//                }
+//            }
+//        };
+//        new Thread(runnable).start();
+//    }
 
     private class CalculateAvgWordCountTask extends AsyncTask<String, Integer, Long> {
 
@@ -493,28 +596,90 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         }
     }
 
-    private class ProcessPartialResultTask extends AsyncTask<String, Integer, String> {
-        @Override
-        protected String doInBackground(String... strings) {
-            String partialResult = strings[0];
-            Log.d(LOG_TAG_DEBUG, partialResult);
-            String partialFinalResult = finalResult + " " + partialResult;
-            return partialFinalResult;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            final String returnedValue = result;
-            super.onPostExecute(result);
-            new CalculateAvgWordCountTask().execute(result);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    speechTextView.setText(returnedValue);
-                }
-            });
-        }
+    private void ProcessPartialResult(final String partialResult) {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                Log.d(LOG_TAG_DEBUG, "ProcessPartialResult:" + partialResult);
+                final String partialFinalResult = finalResult + " " + partialResult;
+//                CalculateAvgWordCount(partialFinalResult);
+                new CalculateAvgWordCountTask().execute(partialFinalResult);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        speechTextView.setText(partialFinalResult);
+                    }
+                });
+            }
+        };
+        new Thread(runnable).start();
     }
+
+    private void ProcessResult(final String result) {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                Log.d(LOG_TAG_DEBUG, "Method: ProcessResult");
+//                String finalResultParam = result;
+                Log.d(LOG_TAG_DEBUG, finalResult);
+                finalResult = finalResult + " " + result;
+                long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
+                totalSpeechTime = totalSpeechTime + intervalTime / 1000;
+//                CalculateKeywordCount(finalResult);
+                new CalculateKeywordCountTask().execute(finalResult);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        speechTextView.setText(finalResult);
+                    }
+                });
+                if (totalSpeechTime < WordCountInterval) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            errorTextView.setText(R.string.Not_Enough_Time_Avg_ErrorMsg);
+                        }
+                    });
+                }
+            }
+        };
+        new Thread(runnable).start();
+    }
+
+//    private class ProcessPartialResultTask extends AsyncTask<String, Integer, String> {
+//
+//        public ProcessPartialResultTask(){
+//            Log.d(LOG_TAG_DEBUG, "Method:ProcessPartialResultTask");
+//        }
+//
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//            Log.d(LOG_TAG_DEBUG, "onPreExecute:ProcessPartialResultTask");
+//        }
+//
+//        @Override
+//        protected String doInBackground(String... strings) {
+//            Log.d(LOG_TAG_DEBUG, "doInBackground");
+//            String partialResult = strings[0];
+//
+//            String partialFinalResult = finalResult + " " + partialResult;
+//            return partialFinalResult;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String result) {
+//            final String returnedValue = result;
+//            super.onPostExecute(result);
+//            new CalculateAvgWordCountTask().execute(result);
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    speechTextView.setText(returnedValue);
+//                }
+//            });
+//        }
+//    }
 
     private String getRecordingLangName(String langCode) {
         Log.d(LOG_TAG_DEBUG, "Method: getRecordingLangName:" + langCode);
@@ -544,39 +709,60 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         return returnValue;
     }
 
-    private class ProcessResultTask extends AsyncTask<String, Integer, String> {
-        @Override
-        protected String doInBackground(String... strings) {
-            Log.d(LOG_TAG_DEBUG, "Method: ASYNC ProcessResultTask");
-            String finalResultParam = strings[0];
-            Log.d(LOG_TAG_DEBUG, finalResult);
-            finalResult = finalResult + " " + finalResultParam;
-            long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
-            totalSpeechTime = totalSpeechTime + intervalTime / 1000;
-            return finalResult;
-        }
+//    private class ProcessResultTask extends AsyncTask<String, Integer, String> {
+//        @Override
+//        protected String doInBackground(String... strings) {
+//            Log.d(LOG_TAG_DEBUG, "Method: ASYNC ProcessResultTask");
+//            String finalResultParam = strings[0];
+//            Log.d(LOG_TAG_DEBUG, finalResult);
+//            finalResult = finalResult + " " + finalResultParam;
+//            long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
+//            totalSpeechTime = totalSpeechTime + intervalTime / 1000;
+//            return finalResult;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String result) {
+//            final String returnedValue = result;
+//            super.onPostExecute(result);
+//            new CalculateKeywordCountTask().execute(result);
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    speechTextView.setText(returnedValue);
+//                }
+//            });
+//            if (totalSpeechTime < WordCountInterval) {
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        errorTextView.setText(R.string.Not_Enough_Time_Avg_ErrorMsg);
+//                    }
+//                });
+//            }
+//        }
+//    }
 
-        @Override
-        protected void onPostExecute(String result) {
-            final String returnedValue = result;
-            super.onPostExecute(result);
-            new CalculateKeywordCountTask().execute(result);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    speechTextView.setText(returnedValue);
-                }
-            });
-            if (totalSpeechTime < WordCountInterval) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        errorTextView.setText(R.string.Not_Enough_Time_Avg_ErrorMsg);
-                    }
-                });
-            }
-        }
-    }
+//    private void CalculateKeywordCount(final String recordingText) {
+//        Runnable runnable = new Runnable() {
+//            @Override
+//            public void run() {
+//                Log.d(LOG_TAG_DEBUG, "Method: CalculateKeywordCount");
+//                if (keyword != null) {
+//                    final int result = Global.CountOfSubstringInString(recordingText, keyword);
+//
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            keywordTextView.setText(String.valueOf(result));
+//                        }
+//                    });
+//
+//                }
+//            }
+//        };
+//        new Thread(runnable).start();
+//    }
 
     private class CalculateKeywordCountTask extends AsyncTask<String, Integer, Integer> {
 
@@ -602,6 +788,44 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
             }
         }
     }
+
+//    private void PrepareTextToSpeech(final Context context){
+//        Runnable runnable=new Runnable() {
+//            @Override
+//            public void run() {
+//                Log.d(LOG_TAG_DEBUG, "Method: ASYNC PrepareTextToSpeechTask");
+//                textToSpeech = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
+//                    @Override
+//                    public void onInit(int status) {
+//                        switch (status) {
+//                            case TextToSpeech.SUCCESS:
+//                                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+//                                String speechLang = preferences.getString("speakinglanguages", "en-US");
+//                                Log.d(LOG_TAG_DEBUG, "Speech Language: " + speechLang);
+//                                int result = textToSpeech.setLanguage(Locale.forLanguageTag(speechLang));
+//                                if (result == TextToSpeech.LANG_MISSING_DATA
+//                                        || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+////                                Toast.makeText(getApplicationContext(), "This language is not supported", Toast.LENGTH_SHORT).show();
+//                                    Log.w(LOG_TAG_DEBUG, "This language is not supported");
+//                                } else {
+//                                    readyToSpeak = true;
+//                                }
+//                                break;
+//                            case TextToSpeech.ERROR:
+//                                Log.w(LOG_TAG_DEBUG, "TTS Error:" + status);
+////                            Toast.makeText(getApplicationContext(), "TTS Initialization failed", Toast.LENGTH_SHORT).show();
+//                                readyToSpeak = false;
+//                                break;
+//                            default:
+//                                Log.w(LOG_TAG_DEBUG, "Status of text to speech:" + status);
+//                                break;
+//                        }
+//                    }
+//                });
+//            }
+//        };
+//        new Thread(runnable).start();
+//    }
 
     private class PrepareTextToSpeechTask extends AsyncTask<Void, Integer, Void> {
 

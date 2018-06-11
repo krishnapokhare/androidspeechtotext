@@ -1,51 +1,21 @@
 package com.kpokhare.offlinespeechrecognizer;
 
-import android.annotation.TargetApi;
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.content.res.TypedArray;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.preference.ListPreference;
-import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
-import android.speech.tts.TextToSpeech;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.NavUtils;
 import android.preference.PreferenceManager;
-import android.preference.RingtonePreference;
-import android.support.v4.view.GravityCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import android.support.v7.preference.PreferenceFragmentCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
+
+import java.util.List;
+import java.util.Locale;
 
 
 /**
@@ -110,9 +80,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             case R.id.action_conversations:
                 startActivity(new Intent(getApplicationContext(), ConversationsActivity.class));
                 return true;
-            case R.id.action_grewords:
-                startActivity(new Intent(getApplicationContext(), GreWordListActivity.class));
-                return true;
+//            case R.id.action_grewords:
+//                startActivity(new Intent(getApplicationContext(), GreWordListActivity.class));
+//                return true;
             case R.id.action_logout:
                 FirebaseAuth.getInstance().signOut();
                 startActivity(new Intent(getApplicationContext(),LoginActivity.class));

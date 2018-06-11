@@ -25,12 +25,12 @@
         android:orderInCategory="200"
         android:title="@string/action_conversations"
         app:showAsAction="never" />
-    <item
-        android:id="@+id/action_grewords"
-        android:icon="@drawable/ic_gre_words"
-        android:orderInCategory="300"
-        android:title="@string/action_grewords"
-        app:showAsAction="never" />
+    <!--<item-->
+    <!--android:id="@+id/action_grewords"-->
+    <!--android:icon="@drawable/ic_gre_words"-->
+    <!--android:orderInCategory="300"-->
+    <!--android:title="@string/action_grewords"-->
+    <!--app:showAsAction="never" />-->
     <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_settings"

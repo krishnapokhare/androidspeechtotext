@@ -1,12 +1,12 @@
 package com.kpokhare.offlinespeechrecognizer;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -15,8 +15,6 @@ import android.view.View;
 import android.widget.FrameLayout;
 
 import com.google.firebase.auth.FirebaseAuth;
-
-import java.util.Objects;
 
 public class BaseActivity extends AppCompatActivity {
 
@@ -116,9 +114,9 @@ public class BaseActivity extends AppCompatActivity {
             case R.id.action_conversations:
                 startActivity(new Intent(getApplicationContext(), ConversationsActivity.class));
                 return true;
-            case R.id.action_grewords:
-                startActivity(new Intent(getApplicationContext(), GreWordListActivity.class));
-                return true;
+//            case R.id.action_grewords:
+//                startActivity(new Intent(getApplicationContext(), GreWordListActivity.class));
+//                return true;
             case R.id.action_logout:
                 signOut();
             default:

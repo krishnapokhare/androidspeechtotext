@@ -4,7 +4,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -13,6 +12,11 @@ import java.util.List;
 public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdapter.ViewHolder> {
     private List<Conversation> ConversationList;
     public ConversationsAdapterListener itemClickListener;
+
+    public void setValues(List<Conversation> conversations) {
+        ConversationList = conversations;
+        this.notifyDataSetChanged();
+    }
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -81,6 +85,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
+        if (ConversationList == null) return 0;
         return ConversationList.size();
     }
 

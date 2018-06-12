@@ -1,9 +1,7 @@
 package com.kpokhare.offlinespeechrecognizer;
 
 
-import android.app.Dialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -14,8 +12,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -49,6 +45,18 @@ public class ConversationsFragment extends Fragment {
     }
 
     @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+//        ConversationsViewModel viewModel=ViewModelProviders.of(this).get(ConversationsViewModel.class);
+//        viewModel.getConversations().observe(this, new Observer<List<Conversation>>() {
+//            @Override
+//            public void onChanged(@Nullable List<Conversation> conversations) {
+//                convAdapter.setValues(conversations);
+//            }
+//        });
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.i(LOG_TAG, "onCreateView called");
@@ -60,11 +68,12 @@ public class ConversationsFragment extends Fragment {
         conversationsRecyclerView.setHasFixedSize(true);
         LinearLayoutManager MyLayoutManager = new LinearLayoutManager(getActivity());
         MyLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        if (conversationList.size() > 0 & conversationsRecyclerView != null) {
-            conversationsRecyclerView.setAdapter(new ConversationsAdapter(conversationList));
-        }
+        if (conversationList != null)
+            if (conversationList.size() > 0 && conversationsRecyclerView != null) {
+                conversationsRecyclerView.setAdapter(new ConversationsAdapter(conversationList));
+            }
         conversationsRecyclerView.setLayoutManager(MyLayoutManager);
-
+//        conversationList = new ArrayList<>();
         convAdapter = new ConversationsAdapter(conversationList, new ConversationsAdapter.ConversationsAdapterListener() {
             @Override
             public void deleteOnClick(View v, int position) {

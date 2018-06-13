@@ -108,11 +108,14 @@ public class BaseActivity extends AppCompatActivity {
             case android.R.id.home:
                 mDrawerLayout.openDrawer(GravityCompat.START);
                 return true;
+            case R.id.action_home:
+                startActivity(new Intent(this, MainActivity.class));
+                return true;
             case R.id.action_settings:
-                startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
+                startActivity(new Intent(this, SettingsActivity.class));
                 return true;
             case R.id.action_conversations:
-                startActivity(new Intent(getApplicationContext(), ConversationsActivity.class));
+                startActivity(new Intent(this, ConversationsActivity.class));
                 return true;
 //            case R.id.action_grewords:
 //                startActivity(new Intent(getApplicationContext(), GreWordListActivity.class));

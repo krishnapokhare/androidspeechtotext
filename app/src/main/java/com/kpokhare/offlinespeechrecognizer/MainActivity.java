@@ -58,7 +58,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     private Intent recognizerIntent;
     private String recordingLangCode;
     private TextView speechTextView;
-    private String finalResult;
+    private StringBuilder finalResult;
     private boolean stopRecording;
     private String recordingLangName = "English-United States";
     String[] languages;
@@ -100,7 +100,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
 
         languages = getResources().getStringArray(R.array.languages);
         languageValues = getResources().getStringArray(R.array.languages_values);
-
+        finalResult = new StringBuilder();
         PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
         LoadSupportedLanguages(this);
         InitializeRecognizerIntent();
@@ -199,7 +199,10 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         Log.d(LOG_TAG_DEBUG, "Method: InitializeSpeechSettings");
         InitializeSpeechRecognizer();
         WordCountIntervalIncrementor = WordCountInterval;
-        finalResult = "";
+        if (finalResult != null) {
+            finalResult.setLength(0);
+            finalResult.trimToSize();
+        }
         totalSpeechTime = 0;
         speechTextView.setText(finalResult);
         startSpeechMessageCount = 0;
@@ -233,8 +236,12 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
     }
 
     private void startListening() {
-        if (speech != null && !stopRecording) { //Checking if Stop Recording button is clicked in UI
-            speech.startListening(recognizerIntent);
+        try {
+            if (speech != null && !stopRecording) { //Checking if Stop Recording button is clicked in UI
+                speech.startListening(recognizerIntent);
+            }
+        } catch (Exception ex) {
+            Log.d(LOG_TAG_DEBUG, "Method:startListening" + ex.getMessage());
         }
     }
 
@@ -275,6 +282,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
             startListening();
         } else {//if(error == SpeechRecognizer.ERROR_CLIENT || error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY){
             onStopButtonClick();
+            Log.e(LOG_TAG_DEBUG, "SpeechRecognizer Error: " + getErrorText(error));
             Toast.makeText(this, "Error: " + getErrorText(error), Toast.LENGTH_SHORT).show();
         }
     }
@@ -299,7 +307,7 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
             intervalSpeechStopDate = Calendar.getInstance().getTime();
             Log.d(LOG_TAG_DEBUG, "PartialResults:" + matches.get(0));
 //            new ProcessPartialResultTask().execute(matches.get(0));
-            ProcessPartialResult(matches.get(0));
+            ProcessPartialResult(matches.get(0), finalResult.toString());
         }
     }
 
@@ -596,12 +604,12 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
         }
     }
 
-    private void ProcessPartialResult(final String partialResult) {
+    private void ProcessPartialResult(final String partialResult, final String finalResultParam) {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
                 Log.d(LOG_TAG_DEBUG, "ProcessPartialResult:" + partialResult);
-                final String partialFinalResult = finalResult + " " + partialResult;
+                final String partialFinalResult = finalResultParam + " " + partialResult;
 //                CalculateAvgWordCount(partialFinalResult);
                 new CalculateAvgWordCountTask().execute(partialFinalResult);
                 runOnUiThread(new Runnable() {
@@ -621,12 +629,12 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
             public void run() {
                 Log.d(LOG_TAG_DEBUG, "Method: ProcessResult");
 //                String finalResultParam = result;
-                Log.d(LOG_TAG_DEBUG, finalResult);
-                finalResult = finalResult + " " + result;
+                Log.d(LOG_TAG_DEBUG, finalResult.toString());
+                finalResult.append(" " + result);
                 long intervalTime = intervalSpeechStopDate.getTime() - intervalSpeechStartDate.getTime();
                 totalSpeechTime = totalSpeechTime + intervalTime / 1000;
 //                CalculateKeywordCount(finalResult);
-                new CalculateKeywordCountTask().execute(finalResult);
+                new CalculateKeywordCountTask().execute(finalResult.toString());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

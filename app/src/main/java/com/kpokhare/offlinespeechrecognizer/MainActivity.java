@@ -228,8 +228,17 @@ public class MainActivity extends BaseActivity implements RecognitionListener {
 
     private void stopListening() {
         if (speech != null) {
-            speech.stopListening();
-            speech.cancel();
+            try {
+                speech.stopListening();
+
+            } catch (Exception ex) {
+                Log.d(LOG_TAG_DEBUG, "Method:stopListening while StopListening called" + ex.getMessage());
+            }
+            try {
+                speech.cancel();
+            } catch (Exception ex) {
+                Log.d(LOG_TAG_DEBUG, "Method:startListening while Cancel called" + ex.getMessage());
+            }
             speech.destroy();
             speech = null;
         }
